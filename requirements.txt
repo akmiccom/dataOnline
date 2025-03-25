@@ -1,0 +1,6 @@
+ipykernel
+pandas
+selenium
+webdriver-manager
+beautifulsoup4
+requests
