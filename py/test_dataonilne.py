@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[37]:
+# In[23]:
 
 
 from selenium.webdriver import Chrome, ChromeOptions
@@ -20,49 +20,70 @@ import sqlite3
 import os
 
 
-# In[38]:
+# In[24]:
 
 
-def start_google_chrome(url):
-
-    # Chrome start by specifying port
-    chrome_path = r'"C:\Program Files\Google\Chrome\Application\chrome.exe" -remote-debugging-port=9222 --user-data-dir="C:\temp"'
+def start_google_chrome(url, port=9222, user_data_dir="C:/temp"):
+    
+    chrome_path = f'"C:\Program Files\Google\Chrome\Application\chrome.exe" -remote-debugging-port={port} --user-data-dir="{user_data_dir}"'
     Popen(chrome_path)
     sleep(1)
+
     options = ChromeOptions()
-    options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+    options.add_experimental_option("debuggerAddress", f"127.0.0.1:{port}")
 
-    new_driver = ChromeDriverManager().install()
-    service = Service(executable_path=new_driver)
-    driver = Chrome(service=service, options=options)
-
+    driver = Chrome(service=Service(ChromeDriverManager().install()), options=options)
     driver.get(url)
     driver.implicitly_wait(10)
-    sleep(1)
-
+    
     return driver
 
 
-# In[39]:
+# In[25]:
+
+
+def create_table(conn):
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS slot_data (
+            date TEXT,
+            hall_id INTEGER,
+            model TEXT,
+            unit_no INTEGER,
+            start INTEGER,
+            bb INTEGER,
+            rb INTEGER,
+            art INTEGER,
+            max_medals INTEGER,
+            bb_rate TEXT,
+            rb_rate TEXT,
+            art_rate TEXT,
+            total_rate TEXT,
+            last_start INTEGER,
+            UNIQUE(date, unit_no)
+        )
+    """)
+    conn.commit()
+
+
+# In[26]:
 
 
 URL = f"https://daidata.goraggio.com/"
 STORES = {"EXA FIRST" : 101262}
-
-
 hall_id = STORES["EXA FIRST"]
 
 url = URL + str(hall_id)
 print(url)
 
 
-# In[40]:
+# In[27]:
 
 
 driver = start_google_chrome(url)
 
 
-# In[41]:
+# In[28]:
 
 
 store_name = driver.title.replace(" - 台データオンライン", "")
@@ -70,7 +91,7 @@ store_name = store_name.replace(" ", "_")
 print(store_name)
 
 
-# In[42]:
+# In[29]:
 
 
 # 機種名入力
@@ -82,7 +103,7 @@ if input_box:
     input_box.send_keys(search_word, Keys.ENTER)
 
 
-# In[44]:
+# In[30]:
 
 
 # 広告対策
@@ -92,7 +113,7 @@ except NoSuchElementException:
     pass
 
 
-# In[45]:
+# In[31]:
 
 
 # 機種名取得して n 番目をクリック
@@ -107,7 +128,7 @@ WebDriverWait(driver, 10).until(
 )
 
 
-# In[46]:
+# In[32]:
 
 
 # 日付変更
@@ -117,23 +138,25 @@ select = Select(select_elem)
 dates = [option.text for option in select.options]
 
 select.select_by_visible_text(dates[DAYS_AGO])
+print(dates[DAYS_AGO])
 
 WebDriverWait(driver, 10).until(
     EC.invisibility_of_element_located((By.CLASS_NAME, "table.sorter"))
 )
 
-print(dates[DAYS_AGO])
 
-
-# In[47]:
+# In[33]:
 
 
 # ヘッダー（固定）
 
 # データフレーム化・保存
-file_name = f"csv/{store_name}_{model_name}_{dates[DAYS_AGO]}.csv"
+file_name = f"../csv/{store_name}_{model_name}_{dates[DAYS_AGO]}.csv"
  
-if not os.path.exists(file_name):
+if os.path.exists(file_name):
+    print(f"データは既に保存されています： {file_name}")
+    df = pd.read_csv(file_name)
+else:
     # テーブル取得
     rows = driver.find_elements(By.CSS_SELECTOR, 'table tr')
     
@@ -150,27 +173,28 @@ if not os.path.exists(file_name):
     df = pd.DataFrame(data, columns=columns)
     df.to_csv(file_name, index=False, encoding="utf-8-sig")
     print(f"データ保存完了： {file_name}")
-else:
-    print(f"データは既に保存されています： {file_name}")
-    df = pd.read_csv(file_name)
 
 
-# In[209]:
+# In[34]:
 
 
-# driver.quit()
+driver.quit()
 
 
-# In[48]:
+# In[35]:
 
 
 # データベースに接続（ファイルがなければ作成される）
-conn = sqlite3.connect("db/pachislo.db")
+DB_PATH = "../db/pachislo.db"
+conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
 conn.commit()
 
+# for row in conn.execute("PRAGMA table_info(slot_data)"):
+#     print(row)
 
-# In[49]:
+
+# In[36]:
 
 
 df["date"] = dates[DAYS_AGO]
@@ -178,22 +202,59 @@ df["hall_id"] = hall_id
 df["model"] = model_name
 
 
-# In[50]:
+# In[37]:
 
 
-df_sqlite = df.rename(columns={
+df = df.rename(columns={
     "台番号": "unit_no", "累計スタート": "start", "BB回数": "bb", "RB回数": "rb",
     "ART回数": "art", "最大持玉": "max_medals", "BB確率": "bb_rate", "RB確率": "rb_rate",
     "ART確率": "art_rate", "合成確率": "total_rate", "前日最終スタート": "last_start"
 })
 
-df_sqlite.head()
+expected_columns = [
+    "date",
+    "hall_id",
+    "model",
+    "unit_no",
+    "start",
+    "bb",
+    "rb",
+    "art",
+    "max_medals",
+    "bb_rate",
+    "rb_rate",
+    "art_rate",
+    "total_rate",
+    "last_start",
+]
+
+df = df[[col for col in expected_columns if col in df.columns]]
+
+df.head()
 
 
-# In[51]:
+# In[38]:
 
 
 # SQLiteに書き込む
-df_sqlite.to_sql("slot_data", conn, if_exists="append", index=False)
-conn.commit()
+conn = sqlite3.connect(DB_PATH)
+create_table(conn)
+cursor = conn.cursor()
+for _, row in df.iterrows():
+    cursor.execute(
+        """
+        INSERT OR IGNORE INTO slot_data (
+            date, hall_id, model, unit_no, start, bb, rb, art,
+            max_medals, bb_rate, rb_rate, art_rate, total_rate, last_start
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """,
+        tuple(row[col] for col in expected_columns),
+    )
+conn.close()
+
+
+# In[ ]:
+
+
+
 
