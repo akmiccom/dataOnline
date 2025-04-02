@@ -3,3 +3,9 @@ webdriver-manager
 selenium
 pandas
 undetected_chromedriver
+numpy
+matplotlib
+seaborn
+scikit-learn
+xgboost
+colorlog
