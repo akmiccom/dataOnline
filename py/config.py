@@ -8,11 +8,7 @@ DB_PATH = "db/anaslo.db"
 
 MAX_RETRIES = 5
 
-DATA = "ホールデータ"
-PREF = "東京都"
-HALL_NAME = "exa-first"
-EXTRA_WORD = "-データ一覧"
 MAIN_URL = f"https://ana-slo.com/"
-
-HALL_URL = f"{MAIN_URL}{DATA}/{PREF}/{HALL_NAME}{EXTRA_WORD}/"
+DATA = "ホールデータ"
+EXTRA_WORD = "-データ一覧"
 

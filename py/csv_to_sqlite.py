@@ -8,6 +8,7 @@ import pandas as pd
 import sqlite3
 import os
 import glob
+import json
 from logger_setup import setup_logger
 
 logger = setup_logger("csv_to_sqlite")
@@ -96,8 +97,7 @@ def csv_to_df(csv_file, hall_id):
     df["hall_id"] = hall_id
 
     df = df[[col for col in expected_columns if col in df.columns]]
-    df['medals'] = df['medals'].str.replace("+", "")
-
+    
     # 数値変換用の共通処理
     def extract_digits(series, prefix_remove=None):
         series = series.astype(str).str.replace(",", "", regex=True)
@@ -106,22 +106,32 @@ def csv_to_df(csv_file, hall_id):
         series = series.str.extract(r"(\d+)").dropna().astype(int)
         return series
 
-    df["start"] = extract_digits(df["start"])
-    df["bb"] = extract_digits(df["bb"])
-    df["rb"] = extract_digits(df["rb"])
-    df["medals"] = extract_digits(df["medals"])
-    df["total_rate"] = extract_digits(df["total_rate"], prefix_remove="1/")
-    df["bb_rate"] = extract_digits(df["bb_rate"], prefix_remove="1/")
-    df["rb_rate"] = extract_digits(df["rb_rate"], prefix_remove="1/")
-    
+    # カラムごとの変換定義（カラム名: prefix_remove）
+    columns_to_extract = {
+        "start": None,
+        "bb": None,
+        "rb": None,
+        "medals": "1+",
+        "total_rate": "1/",
+        "bb_rate": "1/",
+        "rb_rate": "1/",
+    }
+
+    # カラムをチェックして処理 or 0埋め
+    for col, prefix in columns_to_extract.items():
+        if col in df.columns:
+            df[col] = extract_digits(df[col], prefix)
+        else:
+            df[col] = 0  # カラムがなければ 0 を代入（int型）
+
     return df
 
 
 # In[5]:
 
 
-def df_to_data_base(df):
-    conn = sqlite3.connect(DB_PATH)
+def df_to_data_base(df, db_path):
+    conn = sqlite3.connect(db_path)
     create_table(conn)
 
     cursor = conn.cursor()
@@ -142,15 +152,21 @@ def df_to_data_base(df):
 
 
 # === 実行 ===
-def csv_to_sqlite(csv_folder, db_path, hall_id):
+def csv_to_sqlite(csv_folder, db_path, hall_name, hall_id):
     conn = sqlite3.connect(db_path)
     create_table(conn)
 
-    csv_files = glob.glob(os.path.join(csv_folder, "EXA_FIRST_2025*.csv"))
+    csv_files = glob.glob(os.path.join(csv_folder, "EXA_FIRST_202*.csv"))
+    csv_files = glob.glob(os.path.join(csv_folder, "パラッツォ川越店_202*.csv"))
+    csv_files = glob.glob(os.path.join(csv_folder, "第一プラザ狭山店_202*.csv"))
+    # files = glob.glob(os.path.join(csv_folder, "../csv/*.csv"))
+    # pattern = re.compile(r".+[T]_\d{4}-\d{2}-\d{2}\.csv")
+    # csv_files = [f for f in files if pattern.match(f)]
+    
     for file in csv_files:
         logger.info(f"📥 インポート中: {file}")
         df = csv_to_df(file, hall_id)
-        df_to_data_base(df)
+        df_to_data_base(df, db_path)
 
     conn.close()
     logger.info("✅ 全CSVデータをDBに取り込みました。")
@@ -162,11 +178,22 @@ def csv_to_sqlite(csv_folder, db_path, hall_id):
 
 if __name__ == "__main__":
     
+    with open("halls.json", "r", encoding="utf-8") as f:
+        halls = json.load(f)
+        
+    # HALL_NAME = "パラッツォ川越店"
+    # HALL_NAME = "第一プラザ狭山店"
+    HALL_NAME = "EXA FIRST"
+    # HALL_ID = halls["東京都"][HALL_NAME]
+    
     CSV_FOLDER = "csv"  # CSVファイルがあるフォルダ
     DB_PATH = "db/anaslo.db"
-    HALL_ID = 101262
+    HALL_ID = 100800
+    # HALL_ID = 101262
+    # HALL_ID = 999999
+    # print(HALL_ID)
 
-    csv_to_sqlite(CSV_FOLDER, DB_PATH, HALL_ID)
+    csv_to_sqlite(CSV_FOLDER, DB_PATH, HALL_NAME, HALL_ID)
 
 
 # In[ ]:
