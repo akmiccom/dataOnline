@@ -9,3 +9,6 @@ seaborn
 scikit-learn
 xgboost
 colorlog
+gspread
+gspread_dataframe
+oauth2client

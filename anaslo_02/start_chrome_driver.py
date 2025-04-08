@@ -32,6 +32,8 @@ def start_google_chrome(url, screen_width=2200, screen_height=1900, implicitly_w
     options.add_argument("--disable-infobars")  # "Chromeは自動テスト..."を非表示
     options.add_argument("--disable-notifications")  # 通知をブロック
     options.add_argument("--remote-debugging-port=9222")  # デバッグ用ポート
+    # options.add_argument("--force-device-scale-factor=0.90") # 画面スケール調整
+
 
     # Chromeドライバーの起動
     driver = uc.Chrome(options=options)
