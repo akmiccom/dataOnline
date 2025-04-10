@@ -52,7 +52,7 @@ def get_hall_id_from_db(conn, hall_name, prefecture_name=None):
 # データベース接続
 def append_database(cursor, df, hall_id, hall_name, date):
     for _, row in df.iterrows():
-        model_name = row["machine_name"]
+        model_name = row["model_name"]
         unit_no = int(row["unit_no"])
         games = int(row["game"])
         medals = int(row["medals"])
@@ -94,7 +94,7 @@ def csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH):
         shutil.move(csv_file, archive_path)
         print(f"📦 CSVファイルをアーカイブへ移動しました → {archive_path}\n")
         
-        time.sleep(0.5)
+        time.sleep(0.1)
 
     conn.commit()
     conn.close()

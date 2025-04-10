@@ -159,7 +159,7 @@ def extract_and_save_model_data(driver, prefecture, hall_name, date, csv_path):
         # DataFrameを作成しCSVに保存
         df = pd.DataFrame(data, columns=columns)
         df = df.iloc[:, :6]  # 最初の6列を取得
-        df.columns = ["machine_name", "unit_no", "game", "medals", "BB", "RB"]
+        df.columns = ["model_name", "unit_no", "game", "medals", "BB", "RB"]
         df['unit_no'] = df['unit_no'].astype(int)
         df['game'] = df['game'].str.replace(",", "").astype(int)
         df['medals'] = df['medals'].str.replace(",", "").astype(int)
@@ -204,14 +204,17 @@ if __name__ == "__main__":
 
     PREF = "東京都"
     HALL_NAME = "exa-first"
+    # PREF = "埼玉県"
+    # HALL_NAME = "パラッツォ川越店"
+    
     URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
 
     DAYS_AGO = 1
-    RERIOD = 1
+    RERIOD = 2
 
     driver = start_google_chrome("https://www.google.com/")
 
     for days_ago in range(DAYS_AGO, DAYS_AGO+RERIOD):
         scraper_for_data(driver, days_ago, REMOVE_ADS_SCRIPT, CSV_PATH, PREF, URL)
 
-    driver.close()
+    # driver.close()
