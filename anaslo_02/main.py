@@ -4,6 +4,7 @@
 from config import DB_PATH, CSV_PATH, ARCHIVE_PATH
 import scraper
 from csv_to_database import csv_to_database
+from databese_to_gspread import write_spreadsheet, rb_rate_n_days_ago
 from utils import upgrade_uc_if_needed
 from logger_setup import setup_logger
 
@@ -17,9 +18,11 @@ HALL_NAME = "exa-first"
 
 SCRAPER = True
 TO_DATABESE = True
+ADD_GSPREADSHEET = True
 
 DAYS_AGO = 1
 PERIOD = 1
+SHEET_NAME = "nDAYS_AGO"
 
 URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
 
@@ -32,4 +35,7 @@ if SCRAPER:
 
 if TO_DATABESE:
     csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH)
+
+if ADD_GSPREADSHEET:
+    write_spreadsheet(SHEET_NAME, rb_rate_n_days_ago)
 

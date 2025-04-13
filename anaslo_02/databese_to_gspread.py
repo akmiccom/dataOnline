@@ -17,6 +17,9 @@ spreadSheet_ids = {
 # 検索キーワードよりホール名取得
 SEARCH_WORD = "EXA FIRST"
 SPREADSHEET_ID = spreadSheet_ids[SEARCH_WORD]
+if SEARCH_WORD not in spreadSheet_ids:
+    raise ValueError(f"{SEARCH_WORD} のスプレッドシートIDが見つかりません")
+
 
 # スプレッドシート認証設定
 scope = [
@@ -63,6 +66,8 @@ df = pd.read_sql_query(query, conn, params=(hall_name,))
 df["date"] = pd.to_datetime(df["date"])
 df.drop(columns=["result_id", "hall_id", "model_id"], inplace=True)
 df = df[["hall_name", "date", "model_name", "unit_no", "game", "BB", "RB", "medals"]]
+df["BB"] = df["BB"].replace(0, np.nan)
+df["RB"] = df["RB"].replace(0, np.nan)
 df["BB_rate"] = (df["game"] / df["BB"]).round(1)
 df["RB_rate"] = (df["game"] / df["RB"]).round(1)
 df["Total_rate"] = (df["game"] / (df["BB"] + df["RB"])).round(1)
@@ -73,7 +78,7 @@ df["weekday"] = df["date"].dt.weekday
 conn.close()
 
 
-def rb_rate_n_days_ago(start_date, end_date, model_name):
+def get_medals_summary(start_date, end_date, model_name):
     # RB_RATE
     df_tmp = df[
         (df["model_name"] == model_name)
@@ -96,27 +101,37 @@ def rb_rate_n_days_ago(start_date, end_date, model_name):
     return medals
 
 
-if __name__ == "__main__":
+def write_spreadsheet(sheet_name, get_medals_summary):
+    
+    print(f"本日より3日前のデータを追加します: {sheet_name}")
 
-    SHEET_NAME = "nDAYS_AGO"
-
-    today = datetime.date.today()
-    start_date = today + datetime.timedelta(days=-1)
-    end_date = today + datetime.timedelta(days=-3)
-
-    models = [
+    MODELS = [
         "マイジャグラーV",
         "ゴーゴージャグラー3",
         "アイムジャグラーEX-TP",
         "ファンキージャグラー2",
     ]
+    
+    today = datetime.date.today()
+    start_date = today + datetime.timedelta(days=-1)
+    end_date = today + datetime.timedelta(days=-3)
+    print(f"開始日: {start_date}, 終了日: {end_date}")
 
-    sheet = spreadsheet.worksheet(SHEET_NAME)
+    sheet = spreadsheet.worksheet(sheet_name)
     sheet.clear()
 
     next_row = 1
-    for model in models:
-        medals = rb_rate_n_days_ago(start_date, end_date, model)
+    for model in MODELS:
+        medals = get_medals_summary(start_date, end_date, model)
         set_with_dataframe(sheet, medals, row=next_row, include_index=True)
         existing = get_as_dataframe(sheet, evaluate_formulas=True)
         next_row += medals.shape[0] + 5
+        print(f"追加完了: {model}")
+
+    sheet.update_cell(1, 1, today.strftime("UPDATED: %Y-%m-%d"))
+
+
+if __name__ == "__main__":
+    
+    sheet_name = "nDAYS_AGO"
+    write_spreadsheet(sheet_name, get_medals_summary)
