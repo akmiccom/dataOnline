@@ -5,12 +5,16 @@ from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 import time
 import re
+from logger_setup import setup_logger
+from config import LOG_PATH
 
 
 REMOVE_ADS_SCRIPT = """
 var ads = document.querySelectorAll('[id^="google_ads"], [class*="ads"], [class*="sponsored"]');
 ads.forEach(ad => ad.remove());
 """
+
+logger = setup_logger("scraper", log_file=LOG_PATH)
 
 def click_date_link(driver, DAYS_AGO, MAX_RETRIES=3):
     """
@@ -30,11 +34,11 @@ def click_date_link(driver, DAYS_AGO, MAX_RETRIES=3):
         )
 
         if DAYS_AGO > len(date_links):
-            print(f"エラー: DAYS_AGO={DAYS_AGO} に対応するリンクがありません。")
+            logger.error(f"エラー: DAYS_AGO={DAYS_AGO} に対応するリンクがありません。")
             return False
 
         target_link = date_links[DAYS_AGO - 1]
-        print(f"クリック対象リンク: {target_link.text}")
+        logger.info(f"取得対象日付: {target_link.text}")
 
         while retries < MAX_RETRIES:
             driver.execute_script(
@@ -52,21 +56,21 @@ def click_date_link(driver, DAYS_AGO, MAX_RETRIES=3):
 
             if "google_vignette" in driver.current_url:
                 retries += 1
-                print(
+                logger.info(
                     f"⚠ Google広告が表示されました。リトライします ({retries}/{MAX_RETRIES})"
                 )
                 driver.back()  # 広告ページから戻る
                 time.sleep(2)
                 continue  # リトライ
 
-            print(f"遷移成功: {driver.current_url}")
+            logger.info(f"遷移成功: {driver.current_url}")
             date, hall_name = extract_date_hall(driver.current_url)
             return date, hall_name
 
     except Exception as e:
-        print(f"エラー発生: {e}")
+        logger.error(f"エラー発生: {e}")
 
-    print("クリック失敗: リトライ回数超過")
+    logger.error("クリック失敗: リトライ回数超過")
     return False  # 失敗
 
 
@@ -85,8 +89,8 @@ def extract_date_hall(url):
         hall_name = hall_name.replace(
             "-", "_"
         ).upper()  # "-" をスペースに置き換えて大文字に
-        print(f"日付: {date}")
-        print(f"ホール名: {hall_name}")
+        logger.info(f"URLより取得した日付: {date}")
+        logger.info(f"URLより取得したホール名: {hall_name}")
         return date, hall_name
     else:
         return None, None  # マッチしない場合
@@ -108,13 +112,13 @@ def click_machine_by_name(driver):
         hall_match = re.search(hall_pattern, title)
         hall_name = hall_match.group(1) if hall_match else None
 
-        print(f"日付: {date}")
-        print(f"ホール名: {hall_name}")
+        logger.info(f"遷移したページの日付: {date}")
+        logger.info(f"遷移したページのホール名: {hall_name}")
 
         return date, hall_name
 
     except Exception as e:
-        print(f"❌ エラー発生: {e}")
+        logger.error(f"❌ エラー発生: {e}")
         return False
 
 
@@ -139,11 +143,11 @@ def extract_and_save_model_data(driver, prefecture, hall_name, date, csv_path):
             ))
 
         if not rows:
-            print(f"⚠️ データが見つかりません")
+            logger.error(f"⚠️ データが見つかりません")
             # return False
 
-        print(f"{len(rows)} row 取得開始")
-        print("取得中...")
+        logger.info(f"{len(rows)} row 取得開始")
+        logger.info("取得中...")
 
         # ヘッダー取得
         header_cells = rows[0].find_elements(By.TAG_NAME, "th")
@@ -154,7 +158,7 @@ def extract_and_save_model_data(driver, prefecture, hall_name, date, csv_path):
         for row in rows[2:]:  # 最終行を除外
             cells = row.find_elements(By.TAG_NAME, "td")
             data.append([cell.text for cell in cells])
-        print(f": {len(data)} データ取得完了")
+        logger.info(f": {len(data)} データ取得完了")
 
         # DataFrameを作成しCSVに保存
         df = pd.DataFrame(data, columns=columns)
@@ -169,13 +173,13 @@ def extract_and_save_model_data(driver, prefecture, hall_name, date, csv_path):
         csv_name = f"{csv_path}{prefecture}_{hall_name}_{date}.csv"
         df.to_csv(csv_name, index=False, encoding="utf-8-sig")
 
-        print(rows[1].text)
+        logger.info(rows[1].text)
 
-        print(f"データ保存完了: {csv_name}")
+        logger.info(f"データ保存完了: {csv_name}")
         return True
 
     except Exception as e:
-        print(f"エラー発生: {e}")
+        logger.error(f"エラー発生: {e}")
         return False
     
     

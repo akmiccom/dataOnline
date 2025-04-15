@@ -1,32 +1,39 @@
 # ============================
 # main.py
 # ============================
-from config import DB_PATH, CSV_PATH, ARCHIVE_PATH
+from config import CSV_PATH, DB_PATH, ARCHIVE_PATH, LOG_PATH, spreadSheet_ids, QUERY
 import scraper
 from csv_to_database import csv_to_database
-from databese_to_gspread import write_spreadsheet, rb_rate_n_days_ago
-from utils import upgrade_uc_if_needed
+from databese_to_gspread import get_medals_summary, write_medals_summary_to_spreadsheet 
+from databese_to_gspread import search_hall_and_load_data, preprocess_result_df
+from utils import upgrade_uc_if_needed, connect_to_spreadsheet, log_banner
 from logger_setup import setup_logger
 
+logger = setup_logger("main", log_file=LOG_PATH)
+
+log_banner("📊 ANA-SLO データ収集開始")
+
+
+SCRAPER = True
+TO_DATABESE = True
+TO_SPREADSHEET = True
+
 PREF = "東京都"
-HALL_NAME = "exa-first"
+HALL_NAME = "EXA FIRST"
 
 # PREF = "埼玉県"
 # HALL_NAME = "アスカ狭山店"
 # HALL_NAME = "パールショップともえ川越店"
 # HALL_NAME = "パラッツォ川越店"
 
-SCRAPER = True
-TO_DATABESE = True
-ADD_GSPREADSHEET = True
 
 DAYS_AGO = 1
 PERIOD = 1
-SHEET_NAME = "nDAYS_AGO"
+SHEET_NAME = "MEDALS_nDAYS_AGO"
 
-URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
 
 if SCRAPER:
+    URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
     upgrade_uc_if_needed()
     driver = scraper.start_google_chrome("https://www.google.com/")
     for days_ago in range(DAYS_AGO, DAYS_AGO + PERIOD):
@@ -36,6 +43,10 @@ if SCRAPER:
 if TO_DATABESE:
     csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH)
 
-if ADD_GSPREADSHEET:
-    write_spreadsheet(SHEET_NAME, rb_rate_n_days_ago)
+if TO_SPREADSHEET:
+    df_from_db = search_hall_and_load_data(HALL_NAME, QUERY)
+    df = preprocess_result_df(df_from_db)
+    spreadsheet = connect_to_spreadsheet(spreadSheet_ids[HALL_NAME])
+    write_medals_summary_to_spreadsheet(df, spreadsheet, SHEET_NAME, get_medals_summary)
 
+logger.info("全ての処理が完了しました。")

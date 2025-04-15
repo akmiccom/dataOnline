@@ -2,7 +2,10 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import undetected_chromedriver as uc
 import time
+from logger_setup import setup_logger
+from config import LOG_PATH
 
+logger = setup_logger("chrome driver", log_file=LOG_PATH)
 
 REMOVE_ADS_SCRIPT = """
 var ads = document.querySelectorAll('[id^="google_ads"], [class*="ads"], [class*="sponsored"]');
@@ -44,9 +47,15 @@ def start_google_chrome(url, screen_width=2200, screen_height=1900, implicitly_w
 
     # 指定URLを開く
     driver.get(url)
-    print("-" * 50)
-    print(f"実行成功: {url}")
+    logger.info(f"実行成功: {url}")
     driver.implicitly_wait(implicitly_wait)  # 最大n秒待機
     time.sleep(1)
 
     return driver
+
+if __name__ == "__main__":
+    
+    # テスト用URLを開く
+    test_url = "https://www.google.com/"
+    driver = start_google_chrome(test_url)
+    driver.quit()

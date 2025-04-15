@@ -5,11 +5,15 @@ import re
 import glob
 import shutil
 import time
+from logger_setup import setup_logger
+from config import LOG_PATH
+
+logger = setup_logger("datebase_to_gspread", log_file=LOG_PATH)
 
 
 # ファイル名から都道府県・ホール名・日付を取得
 def get_pref_hallName_date(csv_file):
-    print(f"File Name： {csv_file}")
+    logger.info(f"File Name： {csv_file}")
     filename = os.path.basename(csv_file)
     match = re.match(r"(.+?)_(.+?)_(\d{4}-\d{2}-\d{2})\.csv", filename)
     if not match:
@@ -19,7 +23,7 @@ def get_pref_hallName_date(csv_file):
     hall_name = match.group(2)
     date = match.group(3)
 
-    print(f"📄 ファイル名から抽出： {prefecture}, {hall_name}, {date}")
+    logger.info(f"📄 ファイル名から抽出： {prefecture}, {hall_name}, {date}")
     
     return prefecture, hall_name, date
 
@@ -71,7 +75,7 @@ def append_database(cursor, df, hall_id, hall_name, date):
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     """, (hall_id, model_id, unit_no, date, games, BB, RB, medals))
     
-    print(f"✅ {hall_name}, {date}: results テーブルに登録しました。")
+    logger.info(f"✅ {hall_name}, {date}: results テーブルに登録しました。")
 
 
 def csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH):
@@ -80,7 +84,7 @@ def csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH):
 
     csv_files = glob.glob(f'{CSV_PATH}*.csv')
     if not csv_files:
-        print("CSVファイルが見つかりません")
+        logger.error("CSVファイルが見つかりません")
         return
     for csv_file in csv_files:
         # CSVファイル名から都道府県・ホール名・日付を取得
@@ -92,7 +96,7 @@ def csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH):
         
         archive_path = os.path.join(ARCHIVE_PATH, os.path.basename(csv_file))
         shutil.move(csv_file, archive_path)
-        print(f"📦 CSVファイルをアーカイブへ移動しました → {archive_path}\n")
+        logger.info(f"📦 CSVファイルをアーカイブへ移動しました → {archive_path}\n")
         
         time.sleep(0.1)
 
