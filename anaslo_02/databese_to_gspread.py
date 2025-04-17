@@ -14,7 +14,7 @@ logger = setup_logger("datebase_to_gspread", log_file=LOG_PATH)
 def search_hall_and_load_data(search_word, query):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    logger.info(f"DB接続: {DB_PATH}")
+    logger.info(f"🚀 DB接続: {DB_PATH}")
     cursor.execute(
         "SELECT hall_id, name FROM halls WHERE name LIKE ?", ("%" + search_word + "%",)
     )
@@ -29,7 +29,7 @@ def search_hall_and_load_data(search_word, query):
 
     df_from_db = pd.read_sql_query(query, conn, params=(hall_name,))
     conn.close()
-    logger.info(f"DB接続終了: {DB_PATH}")
+    logger.info(f"🛑 DB接続終了: {DB_PATH}")
     
     return df_from_db
 
@@ -47,7 +47,7 @@ def preprocess_result_df(df):
     df["month"] = df["date"].dt.month
     df["weekday"] = df["date"].dt.weekday
     
-    logger.info(f"データ前処理完了: {df.shape[0]} rows")
+    logger.info(f"🧹 データ前処理完了: {df.shape[0]} rows")
     
     return df
 
@@ -72,14 +72,14 @@ def get_medals_summary(df, start_date, end_date, model_name):
     medals["Rank"] = medals["Total"].rank(method="min", ascending=True).astype(int)
     medals.columns = pd.MultiIndex.from_product([["MEDALS"], medals.columns])
     
-    logger.info(f"メダル集計完了: {model_name}")
+    logger.info(f"🎯 メダル集計完了: {model_name}")
 
     return medals
 
 
 def write_medals_summary_to_spreadsheet(df, spreadsheet, sheet_name, get_medals_summary):
 
-    logger.info(f"本日より3日前のデータを追加します: {sheet_name}")
+    logger.info(f"📆 本日より3日前のデータを追加します: {sheet_name}")
 
     MODELS = [
         "マイジャグラーV",
@@ -91,7 +91,7 @@ def write_medals_summary_to_spreadsheet(df, spreadsheet, sheet_name, get_medals_
     today = datetime.date.today()
     start_date = today + datetime.timedelta(days=-1)
     end_date = today + datetime.timedelta(days=-3)
-    logger.info(f"基準日: {start_date}, 終了日: {end_date}")
+    logger.info(f"   📍 基準日: {start_date}, 終了日: {end_date}")
 
     sheet = spreadsheet.worksheet(sheet_name)
     sheet.clear()
@@ -102,11 +102,11 @@ def write_medals_summary_to_spreadsheet(df, spreadsheet, sheet_name, get_medals_
         set_with_dataframe(sheet, medals, row=next_row, include_index=True)
         existing = get_as_dataframe(sheet, evaluate_formulas=True)
         next_row += medals.shape[0] + 5
-        logger.info(f"追加完了: {model}")
+        logger.info(f"   ✅ 追加完了: {model}")
 
     sheet.update_cell(1, 1, today.strftime("UPDATED: %Y-%m-%d"))
     
-    logger.info(f"シート更新完了: {sheet_name}")
+    logger.info(f"💾 シート更新完了: {sheet_name}")
 
 
 if __name__ == "__main__":

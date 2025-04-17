@@ -1,15 +1,16 @@
 MAX_RETRIES = 5
 SLEEP_TIME = 5
 
-DB_PATH = "anaslo_02/anaslo_02.db"
+DB_PATH = "anaslo_02/db/anaslo_02.db"
 CSV_PATH = "anaslo_02/csv/"
 ARCHIVE_PATH = "anaslo_02/archive/"
 LOG_PATH = "anaslo_02/log/anaslo.log"
-JSONF = "anaslo_02/spreeadsheet-347321-ff675ab5ccbd.json"
+JSONF = "anaslo_02/json/spreeadsheet-347321-ff675ab5ccbd.json"
 
 spreadSheet_ids = {
     "EXA FIRST": "10-B_vV1pvUzXmvGAiHhODGJgCloOsAmqSO9HvXpk_T8",
     "アスカ狭山店": "179nJF0NvLng7xPKsd_NX2pJBXsDNsO8SJhOvUAvFk2I",
+    "パールショップともえ川越店": "1i70joJ27Hs7inS-D89z9YMSJO1aRvaBeeWn0n9xpktY",
     }
 
 

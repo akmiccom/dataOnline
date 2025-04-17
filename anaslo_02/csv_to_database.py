@@ -96,7 +96,7 @@ def csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH):
         
         archive_path = os.path.join(ARCHIVE_PATH, os.path.basename(csv_file))
         shutil.move(csv_file, archive_path)
-        logger.info(f"📦 CSVファイルをアーカイブへ移動しました → {archive_path}\n")
+        logger.info(f"📦 CSVファイルをアーカイブへ移動しました → {archive_path}")
         
         time.sleep(0.1)
 

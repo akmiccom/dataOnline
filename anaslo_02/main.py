@@ -14,23 +14,22 @@ logger = setup_logger("main", log_file=LOG_PATH)
 log_banner("📊 ANA-SLO データ収集開始")
 
 
-SCRAPER = True
-TO_DATABESE = True
-TO_SPREADSHEET = True
 
 PREF = "東京都"
 HALL_NAME = "EXA FIRST"
 
-# PREF = "埼玉県"
+PREF = "埼玉県"
 # HALL_NAME = "アスカ狭山店"
-# HALL_NAME = "パールショップともえ川越店"
-# HALL_NAME = "パラッツォ川越店"
-
+HALL_NAME = "パールショップともえ川越店"
+HALL_NAME = "第一プラザ狭山店"
 
 DAYS_AGO = 1
-PERIOD = 1
+PERIOD = 30
 SHEET_NAME = "MEDALS_nDAYS_AGO"
 
+SCRAPER = True
+TO_DATABESE = True
+TO_SPREADSHEET = False
 
 if SCRAPER:
     URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
@@ -49,4 +48,4 @@ if TO_SPREADSHEET:
     spreadsheet = connect_to_spreadsheet(spreadSheet_ids[HALL_NAME])
     write_medals_summary_to_spreadsheet(df, spreadsheet, SHEET_NAME, get_medals_summary)
 
-logger.info("全ての処理が完了しました。")
+logger.info("🎉 全ての処理が完了しました。")
