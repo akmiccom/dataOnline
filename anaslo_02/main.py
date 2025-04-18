@@ -18,18 +18,18 @@ log_banner("📊 ANA-SLO データ収集開始")
 PREF = "東京都"
 HALL_NAME = "EXA FIRST"
 
-PREF = "埼玉県"
+# PREF = "埼玉県"
 # HALL_NAME = "アスカ狭山店"
-HALL_NAME = "パールショップともえ川越店"
-HALL_NAME = "第一プラザ狭山店"
+# HALL_NAME = "パールショップともえ川越店"
+# HALL_NAME = "第一プラザ狭山店"
 
 DAYS_AGO = 1
-PERIOD = 30
+PERIOD = 1
 SHEET_NAME = "MEDALS_nDAYS_AGO"
 
 SCRAPER = True
 TO_DATABESE = True
-TO_SPREADSHEET = False
+TO_SPREADSHEET = True
 
 if SCRAPER:
     URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
