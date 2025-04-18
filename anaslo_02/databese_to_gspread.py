@@ -1,3 +1,6 @@
+# ============================
+# detabase_to_gspread.py
+# ============================
 from gspread_dataframe import get_as_dataframe, set_with_dataframe
 import pandas as pd
 import numpy as np
@@ -79,7 +82,7 @@ def get_medals_summary(df, start_date, end_date, model_name):
 
 def write_medals_summary_to_spreadsheet(df, spreadsheet, sheet_name, get_medals_summary):
 
-    logger.info(f"📆 本日より3日前のデータを追加します: {sheet_name}")
+    logger.info(f"📆 本日より7日前のデータを追加します: {sheet_name}")
 
     MODELS = [
         "マイジャグラーV",
@@ -90,7 +93,7 @@ def write_medals_summary_to_spreadsheet(df, spreadsheet, sheet_name, get_medals_
 
     today = datetime.date.today()
     start_date = today + datetime.timedelta(days=-1)
-    end_date = today + datetime.timedelta(days=-3)
+    end_date = today + datetime.timedelta(days=-7)
     logger.info(f"   📍 基準日: {start_date}, 終了日: {end_date}")
 
     sheet = spreadsheet.worksheet(sheet_name)

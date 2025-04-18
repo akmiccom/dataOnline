@@ -14,14 +14,13 @@ logger = setup_logger("main", log_file=LOG_PATH)
 log_banner("📊 ANA-SLO データ収集開始")
 
 
-
-PREF = "東京都"
-HALL_NAME = "EXA FIRST"
-
 # PREF = "埼玉県"
 # HALL_NAME = "アスカ狭山店"
 # HALL_NAME = "パールショップともえ川越店"
 # HALL_NAME = "第一プラザ狭山店"
+
+PREF = "東京都"
+HALL_NAME = "EXA FIRST"
 
 DAYS_AGO = 1
 PERIOD = 1
