@@ -146,7 +146,7 @@ def extract_and_save_model_data(driver, prefecture, hall_name, date, csv_path):
             logger.error(f"⚠️ データが見つかりません")
             # return False
 
-        logger.info(f"{len(rows)} row 取得開始")
+        logger.info(f"{len(rows)} 行の取得を開始します")
         logger.info("取得中...")
 
         # ヘッダー取得
@@ -158,7 +158,7 @@ def extract_and_save_model_data(driver, prefecture, hall_name, date, csv_path):
         for row in rows[2:]:  # 最終行を除外
             cells = row.find_elements(By.TAG_NAME, "td")
             data.append([cell.text for cell in cells])
-        logger.info(f": {len(data)} データ取得完了")
+        logger.info(f"{len(data)}: データ取得完了しました")
 
         # DataFrameを作成しCSVに保存
         df = pd.DataFrame(data, columns=columns)
@@ -208,13 +208,11 @@ if __name__ == "__main__":
 
     PREF = "東京都"
     HALL_NAME = "exa-first"
-    # PREF = "埼玉県"
-    # HALL_NAME = "パラッツォ川越店"
     
     URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
 
     DAYS_AGO = 1
-    RERIOD = 2
+    RERIOD = 1
 
     driver = start_google_chrome("https://www.google.com/")
 

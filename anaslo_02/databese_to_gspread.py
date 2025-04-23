@@ -4,6 +4,7 @@
 from gspread_dataframe import get_as_dataframe, set_with_dataframe
 import pandas as pd
 import numpy as np
+import json
 import sqlite3
 import datetime
 from utils import connect_to_spreadsheet
@@ -33,11 +34,34 @@ def search_hall_and_load_data(search_word, query):
     df_from_db = pd.read_sql_query(query, conn, params=(hall_name,))
     conn.close()
     logger.info(f"🛑 DB接続終了: {DB_PATH}")
-    
+
     return df_from_db
 
 
-def preprocess_result_df(df):
+def grape_calculator_myfive(game, bb, rb, medals, cherry=True):
+    bb_medals = 239.25
+    rb_medals = 95.25
+    replay_rate = 0.411
+    if cherry:
+        cherry_rate_high = 0.04228
+    else:
+        cherry_rate_high = 0.05847
+    denominator_inner = (-medals - (game*3 - (bb*bb_medals + rb*rb_medals + game*replay_rate + game*cherry_rate_high))) / 8
+    grape_rate = (game / denominator_inner) - ((game / denominator_inner) * 2)
+    
+    return grape_rate
+
+def assign_area(unit_no, json_file_path):
+    with open(json_file_path, "r", encoding="utf-8") as f:
+        area_map = json.load(f)
+    for rule in area_map:
+        if rule["start"] <= unit_no <= rule["end"]:
+            return rule["area"]
+    return "その他"
+
+
+def preprocess_result_df(df, json_path):
+    # データ前処理
     df["date"] = pd.to_datetime(df["date"])
     df.drop(columns=["result_id", "hall_id", "model_id"], inplace=True)
     df = df[["hall_name", "date", "model_name", "unit_no", "game", "BB", "RB", "medals"]]
@@ -46,12 +70,20 @@ def preprocess_result_df(df):
     df["BB_rate"] = (df["game"] / df["BB"]).round(1)
     df["RB_rate"] = (df["game"] / df["RB"]).round(1)
     df["Total_rate"] = (df["game"] / (df["BB"] + df["RB"])).round(1)
+    df["grape_rate"] = grape_calculator_myfive(df["game"], df["BB"], df["RB"], df["medals"], cherry=True).round(2)
     df["day"] = df["date"].dt.day
     df["month"] = df["date"].dt.month
     df["weekday"] = df["date"].dt.weekday
-    
+    df["unit_last"] = df["unit_no"].astype(str).str[-1]
+    df["area"] = df["unit_no"].apply(lambda x: assign_area(x, json_path))
+
     logger.info(f"🧹 データ前処理完了: {df.shape[0]} rows")
-    
+    logger.info(f"データサイズ: {df.shape[0]} x {df.shape[1]}")
+    model_list = df["model_name"].unique()
+    logger.debug(f"以下のモデルが含まれています")
+    for i, model in enumerate(model_list):
+        logger.debug(f"{i}: {model}")
+
     return df
 
 
@@ -74,22 +106,16 @@ def get_medals_summary(df, start_date, end_date, model_name):
     medals.drop(labels="Total", level=0, inplace=True)
     medals["Rank"] = medals["Total"].rank(method="min", ascending=True).astype(int)
     medals.columns = pd.MultiIndex.from_product([["MEDALS"], medals.columns])
-    
+
     logger.info(f"🎯 メダル集計完了: {model_name}")
 
     return medals
 
 
-def write_medals_summary_to_spreadsheet(df, spreadsheet, sheet_name, get_medals_summary):
+def medals_summary_to_spreadsheet(df, spreadsheet, sheet_name, get_medals_summary):
 
     logger.info(f"📆 本日より7日前のデータを追加します: {sheet_name}")
-
-    MODELS = [
-        "マイジャグラーV",
-        "ゴーゴージャグラー3",
-        "アイムジャグラーEX-TP",
-        "ファンキージャグラー2",
-    ]
+    MODELS = ["マイジャグラーV", "ゴーゴージャグラー3", "アイムジャグラーEX-TP", "ファンキージャグラー2",]
 
     today = datetime.date.today()
     start_date = today + datetime.timedelta(days=-1)
@@ -98,7 +124,6 @@ def write_medals_summary_to_spreadsheet(df, spreadsheet, sheet_name, get_medals_
 
     sheet = spreadsheet.worksheet(sheet_name)
     sheet.clear()
-
     next_row = 1
     for model in MODELS:
         medals = get_medals_summary(df, start_date, end_date, model)
@@ -106,17 +131,16 @@ def write_medals_summary_to_spreadsheet(df, spreadsheet, sheet_name, get_medals_
         existing = get_as_dataframe(sheet, evaluate_formulas=True)
         next_row += medals.shape[0] + 5
         logger.info(f"   ✅ 追加完了: {model}")
-
     sheet.update_cell(1, 1, today.strftime("UPDATED: %Y-%m-%d"))
-    
     logger.info(f"💾 シート更新完了: {sheet_name}")
+    
 
 
 if __name__ == "__main__":
-    
+
     # 検索キーワードよりホール名取得
     SEARCH_WORD = "EXA FIRST"
-    SHEET_NAME = "MEDALS_nDAYS_AGO"
+    SHEET_NAME = "7日差枚ランキング"
     SPREADSHEET_ID = spreadSheet_ids[SEARCH_WORD]
     if SEARCH_WORD not in spreadSheet_ids:
         raise ValueError(f"{SEARCH_WORD} のスプレッドシートIDが見つかりません")
@@ -138,5 +162,8 @@ if __name__ == "__main__":
 
     spreadsheet = connect_to_spreadsheet(SPREADSHEET_ID)
     df_from_db = search_hall_and_load_data(SEARCH_WORD, query)
-    df = preprocess_result_df(df_from_db)
-    write_medals_summary_to_spreadsheet(df, spreadsheet, SHEET_NAME, get_medals_summary)
+    json_path = r"C:\python\dataOnline\anaslo_02\json\exa_area_map.json"
+    df = preprocess_result_df(df_from_db, json_path)
+    df.to_csv("test.csv", index=False, encoding="utf-8-sig")
+    # medals_summary_to_spreadsheet(df, spreadsheet, SHEET_NAME, get_medals_summary)
+    

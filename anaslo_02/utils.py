@@ -33,7 +33,7 @@ def upgrade_uc_if_needed():
                 check=True,
             )
         else:
-            logger.info(f"undetected-chromedriver は最新版 ({current})")
+            logger.info(f"undetected-chromedriver は最新版です。 ({current})")
     except Exception as e:
         logger.error(f"バージョン確認失敗: {e}")
 

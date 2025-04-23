@@ -1,0 +1,22 @@
+[
+  {"area": "a", "start": 1001, "end": 1010},
+  {"area": "b", "start": 1011, "end": 1020},
+  {"area": "c", "start": 1021, "end": 1026},
+  {"area": "d", "start": 1027, "end": 1032},
+  {"area": "e", "start": 1033, "end": 1041},
+  {"area": "f", "start": 1042, "end": 1050},
+  {"area": "g", "start": 1051, "end": 1055},
+  {"area": "h", "start": 1056, "end": 1060},
+  {"area": "i", "start": 1061, "end": 1067},
+  {"area": "j", "start": 1069, "end": 1084},
+  {"area": "k", "start": 1085, "end": 1092},
+  {"area": "l", "start": 1093, "end": 1099},
+  {"area": "m", "start": 1100, "end": 1106},
+  {"area": "n", "start": 1107, "end": 1113},
+  {"area": "o", "start": 1115, "end": 1122},
+  {"area": "p", "start": 1123, "end": 1129},
+  {"area": "q", "start": 1130, "end": 1136},
+  {"area": "r", "start": 1137, "end": 1143},
+  {"area": "s", "start": 1145, "end": 1150},
+  {"area": "t", "start": 1151, "end": 1155}
+]
