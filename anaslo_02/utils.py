@@ -8,7 +8,7 @@ import sys
 import pkg_resources
 import requests
 from logger_setup import setup_logger
-from config import LOG_PATH, JSONF, spreadSheet_ids
+from config import LOG_PATH, JSONF, SPREADSHEET_IDS
 
 logger = setup_logger("utils", log_file=LOG_PATH)
 
@@ -63,4 +63,4 @@ def log_banner(title: str):
 if __name__ == "__main__":
 
     upgrade_uc_if_needed()
-    connect_to_spreadsheet(spreadSheet_ids["EXA FIRST"])
+    connect_to_spreadsheet(SPREADSHEET_IDS["EXA FIRST"])

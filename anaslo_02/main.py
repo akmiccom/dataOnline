@@ -1,18 +1,17 @@
 # ============================
 # main.py
 # ============================
-from config import CSV_PATH, DB_PATH, ARCHIVE_PATH, LOG_PATH, spreadSheet_ids, QUERY
+from config import CSV_PATH, DB_PATH, ARCHIVE_PATH, LOG_PATH, AREA_MAP_PATH
+from config import QUERY, SPREADSHEET_IDS
 import scraper
 from csv_to_database import csv_to_database
-from databese_to_gspread import get_medals_summary, write_medals_summary_to_spreadsheet
 from databese_to_gspread import search_hall_and_load_data, preprocess_result_df
+from databese_to_gspread import get_medals_summary, medals_summary_to_gspread
+from databese_to_gspread import extract_and_merge_model_data, extract_merge_all_model_date
+from databese_to_gspread import merge_all_model_date_to_gspread
 from utils import upgrade_uc_if_needed, connect_to_spreadsheet, log_banner
 from logger_setup import setup_logger
-
 logger = setup_logger("main", log_file=LOG_PATH)
-
-log_banner("📊 ANA-SLO データ収集開始")
-
 
 # PREF = "埼玉県"
 # HALL_NAME = "アスカ狭山店"
@@ -22,13 +21,24 @@ log_banner("📊 ANA-SLO データ収集開始")
 PREF = "東京都"
 HALL_NAME = "EXA FIRST"
 
+MODEL_LIST = [
+    "マイジャグラーV",
+    "アイムジャグラーEX-TP",
+    "ゴーゴージャグラー3",
+    "ファンキージャグラー2",
+    "ミスタージャグラー",
+]
+
 DAYS_AGO = 1
 PERIOD = 1
-SHEET_NAME = "7日差枚ランキング"
+SHEET_NAME_RANK = "7日差枚ランキング"
+SHEET_NAME_COMPARE = "7日差枚と結果の比較"
 
 SCRAPER = True
 TO_DATABESE = True
 TO_SPREADSHEET = True
+
+log_banner("📊 ANA-SLO データ収集開始")
 
 if SCRAPER:
     URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
@@ -44,9 +54,18 @@ if TO_DATABESE:
 
 if TO_SPREADSHEET:
     df_from_db = search_hall_and_load_data(HALL_NAME, QUERY)
-    df = preprocess_result_df(df_from_db)
-    spreadsheet = connect_to_spreadsheet(spreadSheet_ids[HALL_NAME])
-    write_medals_summary_to_spreadsheet(df, spreadsheet, SHEET_NAME, get_medals_summary)
+    df = preprocess_result_df(df_from_db, AREA_MAP_PATH)
+    spreadsheet = connect_to_spreadsheet(SPREADSHEET_IDS[HALL_NAME])
+    medals_summary_to_gspread(
+        df, MODEL_LIST, spreadsheet, get_medals_summary, sheet_name=SHEET_NAME_RANK
+    )
+
+    merged_by_model = extract_merge_all_model_date(
+        extract_and_merge_model_data, df, MODEL_LIST
+    )
+    merge_all_model_date_to_gspread(
+        merged_by_model, spreadsheet, sheet_name=SHEET_NAME_COMPARE
+    )
 
 logger.info("🎉 ANA-SLO データ収集終了")
 logger.info("=" * 40)
