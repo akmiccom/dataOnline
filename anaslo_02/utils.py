@@ -14,6 +14,7 @@ logger = setup_logger("utils", log_file=LOG_PATH)
 
 
 def upgrade_uc_if_needed():
+    '''chromedriverバージョン確認'''
     try:
         current = pkg_resources.get_distribution("undetected-chromedriver").version
         latest = requests.get(
@@ -38,19 +39,50 @@ def upgrade_uc_if_needed():
         logger.error(f"バージョン確認失敗: {e}")
 
 
-# スプレッドシート認証設定
 def connect_to_spreadsheet(SPREADSHEET_ID):
+    '''スプレッドシート認証設定'''
     scope = [
         "https://spreadsheets.google.com/feeds",
         "https://www.googleapis.com/auth/drive",
     ]
-    jsonf = JSONF
-    creds = ServiceAccountCredentials.from_json_keyfile_name(jsonf, scope)
-    client = gspread.authorize(creds)
-    spreadsheet = client.open_by_key(SPREADSHEET_ID)
-    logger.info(f"スプレッドシートに接続: {spreadsheet.title}")
-    
-    return spreadsheet
+    jsonf = JSONF  # あなたの定義済みパス変数
+
+    try:
+        creds = ServiceAccountCredentials.from_json_keyfile_name(jsonf, scope)
+        client = gspread.authorize(creds)
+        spreadsheet = client.open_by_key(SPREADSHEET_ID)
+        logger.info(f"✅ スプレッドシートに接続しました: {spreadsheet.title}")
+        return spreadsheet
+
+    except gspread.exceptions.SpreadsheetNotFound:
+        logger.error(f"❌ スプレッドシートが見つかりませんでした。ID: {SPREADSHEET_ID}")
+        return None
+
+    except Exception as e:
+        logger.exception(f"❌ スプレッドシート接続中に予期せぬエラーが発生しました: {e}")
+        return None
+
+
+def get_or_create_worksheet(spreadsheet, sheet_name, rows=1000, cols=26):
+    '''存在しないシートを自動で作成'''
+    try:
+        worksheet = spreadsheet.worksheet(sheet_name)
+        logger.info(f"✅ シート '{sheet_name}' が見つかりました")
+    except gspread.exceptions.WorksheetNotFound:
+        worksheet = spreadsheet.add_worksheet(title=sheet_name, rows=rows, cols=cols)
+        logger.info(f"🆕 シート '{sheet_name}' を新規作成しました")
+    return worksheet
+
+
+def get_existing_worksheet(spreadsheet, sheet_name):
+    '''シートがなければログを出して中断'''
+    try:
+        worksheet = spreadsheet.worksheet(sheet_name)
+        logger.info(f"✅ シート '{sheet_name}' に接続しました")
+        return worksheet
+    except gspread.exceptions.WorksheetNotFound:
+        logger.error(f"❌ シート '{sheet_name}' が存在しません")
+        return None
 
 
 def log_banner(title: str):

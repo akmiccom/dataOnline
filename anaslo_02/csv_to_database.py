@@ -6,7 +6,7 @@ import glob
 import shutil
 import time
 from logger_setup import setup_logger
-from config import LOG_PATH
+from config import LOG_PATH, DB_PATH, CSV_PATH, ARCHIVE_PATH
 
 logger = setup_logger("datebase_to_gspread", log_file=LOG_PATH)
 
@@ -63,17 +63,17 @@ def append_database(cursor, df, hall_id, hall_name, date):
         BB = int(row["BB"])
         RB = int(row["RB"])
 
-    # 機種登録＆取得
+        # 機種登録＆取得
         cursor.execute("INSERT OR IGNORE INTO models (name) VALUES (?)", (model_name,))
         cursor.execute("SELECT model_id FROM models WHERE name = ?", (model_name,))
         model_id = cursor.fetchone()[0]
 
-    # 出玉データを登録（重複回避）
+        # 出玉データを登録（重複回避）
         cursor.execute("""
         INSERT OR IGNORE INTO results (
             hall_id, model_id, unit_no, date, game, BB, RB, medals
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """, (hall_id, model_id, unit_no, date, games, BB, RB, medals))
+        """, (hall_id, model_id, unit_no, date, games, BB, RB, medals))
     
     logger.info(f"✅ {hall_name}, {date}: results テーブルに登録しました。")
 
@@ -84,7 +84,7 @@ def csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH):
 
     csv_files = glob.glob(f'{CSV_PATH}*.csv')
     if not csv_files:
-        logger.error("CSVファイルが見つかりません")
+        logger.info("CSVファイルが見つかりません")
         return
     for csv_file in csv_files:
         # CSVファイル名から都道府県・ホール名・日付を取得
@@ -105,9 +105,5 @@ def csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH):
 
 
 if __name__ == "__main__":
-    
-    DB_PATH = "anaslo_02/anaslo_02.db"
-    CSV_PATH = "anaslo_02/csv/"
-    ARCHIVE_PATH = "anaslo_02/archive/"
     
     csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH)

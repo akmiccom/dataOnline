@@ -162,13 +162,21 @@ def extract_and_save_model_data(driver, prefecture, hall_name, date, csv_path):
 
         # DataFrameを作成しCSVに保存
         df = pd.DataFrame(data, columns=columns)
-        df = df.iloc[:, :6]  # 最初の6列を取得
-        df.columns = ["model_name", "unit_no", "game", "medals", "BB", "RB"]
-        df['unit_no'] = df['unit_no'].astype(int)
-        df['game'] = df['game'].str.replace(",", "").astype(int)
-        df['medals'] = df['medals'].str.replace(",", "").astype(int)
-        df['BB'] = df['BB'].astype(int)
-        df['RB'] = df['RB'].astype(int)
+        rename_columns ={"機種名": "model_name", "台番号": "unit_no", "G数": "game", "差枚": "medals"}
+        df.rename(columns=rename_columns, inplace=True)
+        cols_to_convert = ["unit_no", "game", "medals", "BB", "RB"]
+        for col in cols_to_convert:
+            if col in df.columns:
+                df[col] = df[col].replace(",", "", regex=True).astype(int)
+            else:
+                df[col] = 0
+                
+        # 同じ機種を指しているが表記ゆれ対策
+        alias_map = {
+            "SミスタージャグラーKK": "ミスタージャグラー",
+            "S ミスタージャグラー KK": "ミスタージャグラー",
+        }
+        df["model_name"] = df["model_name"].replace(alias_map)
         
         csv_name = f"{csv_path}{prefecture}_{hall_name}_{date}.csv"
         df.to_csv(csv_name, index=False, encoding="utf-8-sig")
@@ -209,6 +217,10 @@ if __name__ == "__main__":
     PREF = "東京都"
     HALL_NAME = "exa-first"
     
+    PREF = "埼玉県"
+    HALL_NAME = "パラッツォ川越店"
+    HALL_NAME = "第一プラザ狭山店"
+    
     URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
 
     DAYS_AGO = 1
@@ -219,4 +231,4 @@ if __name__ == "__main__":
     for days_ago in range(DAYS_AGO, DAYS_AGO+RERIOD):
         scraper_for_data(driver, days_ago, REMOVE_ADS_SCRIPT, CSV_PATH, PREF, URL)
 
-    # driver.close()
+    driver.close()

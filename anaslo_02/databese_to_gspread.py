@@ -105,7 +105,7 @@ def preprocess_result_df(df, json_path):
 
 
 def get_medals_summary(df, start_date, end_date, model_name):
-    # RB_RATE
+    # 7日間のメダル集計
     df_tmp = df[
         (df["model_name"] == model_name)
         & (df["date"].dt.date <= start_date)
