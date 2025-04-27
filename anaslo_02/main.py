@@ -21,10 +21,14 @@ TO_SPREADSHEET = True
 PREF = "東京都"
 HALL_NAME = "EXA FIRST"
 
+DAYS_AGO = 1
+PERIOD = 1
+
 # PREF = "埼玉県"
 # HALL_NAME = "パールショップともえ川越店"
 # HALL_NAME = "パラッツォ川越店"
 # HALL_NAME = "第一プラザ狭山店"
+# HALL_NAME = "第一プラザ坂戸1000"
 
 
 MODEL_LIST = [
@@ -38,11 +42,8 @@ MODEL_LIST = [
     # "ハッピージャグラーVIII",
 ]
 
-DAYS_AGO = 1
-PERIOD = 1
 SHEET_NAME_RANK = "7日差枚ランキング"
 SHEET_NAME_COMPARE = "7日差枚と結果の比較"
-
 
 log_banner("📊 ANA-SLO データ収集開始")
 
@@ -67,9 +68,9 @@ if TO_SPREADSHEET:
     
     df_from_db = search_hall_and_load_data(HALL_NAME, QUERY)
     df = preprocess_result_df(df_from_db, AREA_MAP_PATH)
-    # medals_summary_to_gspread(
-    #     df, MODEL_LIST, spreadsheet, get_medals_summary, sheet_name=SHEET_NAME_RANK
-    # )
+    medals_summary_to_gspread(
+        df, MODEL_LIST, spreadsheet, get_medals_summary, sheet_name=SHEET_NAME_RANK
+    )
     merged_by_model = extract_merge_all_model_date(
         extract_and_merge_model_data, df, MODEL_LIST
     )

@@ -92,13 +92,21 @@ def csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH):
         df = pd.read_csv(csv_file)
 
         hall_id = get_hall_id_from_db(conn, hall_name, prefecture_name=prefecture)
-        append_database(cursor, df, hall_id, hall_name, date)
         
+        try:
+            append_database(cursor, df, hall_id, hall_name, date)
+            logger.info(f"✅ データベースに追加成功: {os.path.basename(csv_file)}")
+
+        except Exception as e:
+            logger.error(f"❌ データベース追加失敗: {os.path.basename(csv_file)} → エラー内容: {e}")
+            continue  # このファイルをスキップして次へ
+
+        # アーカイブに移動
         archive_path = os.path.join(ARCHIVE_PATH, os.path.basename(csv_file))
         shutil.move(csv_file, archive_path)
         logger.info(f"📦 CSVファイルをアーカイブへ移動しました → {archive_path}")
         
-        time.sleep(0.1)
+        time.sleep(0.2) # プログラミングっぽく
 
     conn.commit()
     conn.close()
