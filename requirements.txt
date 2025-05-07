@@ -12,3 +12,4 @@ colorlog
 gspread
 gspread_dataframe
 oauth2client
+selenium-stealth

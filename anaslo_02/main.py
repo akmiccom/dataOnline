@@ -14,7 +14,7 @@ from utils import connect_to_spreadsheet, get_existing_worksheet
 from logger_setup import setup_logger
 logger = setup_logger("main", log_file=LOG_PATH)
 
-SCRAPER = True
+SCRAPER = False
 TO_DATABESE = True
 TO_SPREADSHEET = True
 

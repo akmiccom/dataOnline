@@ -191,7 +191,7 @@ def extract_and_save_model_data(driver, prefecture, hall_name, date, csv_path):
         return False
     
     
-def scraper_for_data(driver, days_ago, REMOVE_ADS_SCRIPT, CSV_PATH, PREF, URL, MAX_RETRIES=5, SLEEP_TIME=5):
+def scraper_for_data(driver, days_ago, REMOVE_ADS_SCRIPT, CSV_PATH, PREF, URL, MAX_RETRIES=5, SLEEP_TIME=10):
     
     driver.get(URL)
     driver.execute_script(REMOVE_ADS_SCRIPT)
@@ -210,16 +210,14 @@ def scraper_for_data(driver, days_ago, REMOVE_ADS_SCRIPT, CSV_PATH, PREF, URL, M
 
 if __name__ == "__main__":
     
-    MAX_RETRIES = 5
-    SLEEP_TIME = 5
     CSV_PATH = "anaslo_02/csv/"
 
     PREF = "東京都"
     HALL_NAME = "exa-first"
     
-    PREF = "埼玉県"
-    HALL_NAME = "パラッツォ川越店"
-    HALL_NAME = "第一プラザ狭山店"
+    # PREF = "埼玉県"
+    # HALL_NAME = "パラッツォ川越店"
+    # HALL_NAME = "第一プラザ狭山店"
     
     URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
 
