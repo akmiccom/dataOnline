@@ -14,7 +14,7 @@ from utils import connect_to_spreadsheet, get_existing_worksheet
 from logger_setup import setup_logger
 logger = setup_logger("main", log_file=LOG_PATH)
 
-SCRAPER = False
+SCRAPER = True
 TO_DATABESE = True
 TO_SPREADSHEET = True
 
@@ -39,7 +39,7 @@ MODEL_LIST = [
     "ミスタージャグラー",
     "ウルトラミラクルジャグラー",
     "ジャグラーガールズ",
-    # "ハッピージャグラーVIII",
+    "ハッピージャグラーVIII",
 ]
 
 SHEET_NAME_RANK = "7日差枚ランキング"
@@ -47,17 +47,17 @@ SHEET_NAME_COMPARE = "7日差枚と結果の比較"
 
 log_banner("📊 ANA-SLO データ収集開始")
 
-if SCRAPER:
-    URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
-    upgrade_uc_if_needed()
-    driver = scraper.start_google_chrome("https://www.google.com/")
-    for days_ago in range(DAYS_AGO, DAYS_AGO + PERIOD):
-        scraper.scraper_for_data(
-            driver, days_ago, scraper.REMOVE_ADS_SCRIPT, CSV_PATH, PREF, URL
-        )
+# if SCRAPER:
+#     URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
+#     upgrade_uc_if_needed()
+#     driver = scraper.start_google_chrome("https://www.google.com/")
+#     for days_ago in range(DAYS_AGO, DAYS_AGO + PERIOD):
+#         scraper.scraper_for_data(
+#             driver, days_ago, scraper.REMOVE_ADS_SCRIPT, CSV_PATH, PREF, URL
+#         )
 
-if TO_DATABESE:
-    csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH)
+# if TO_DATABESE:
+#     csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH)
 
 if TO_SPREADSHEET:    
     spreadsheet = connect_to_spreadsheet(SPREADSHEET_IDS[HALL_NAME])
