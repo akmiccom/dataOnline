@@ -197,13 +197,13 @@ def scraper_for_data(driver, days_ago, REMOVE_ADS_SCRIPT, CSV_PATH, PREF, URL, M
     driver.execute_script(REMOVE_ADS_SCRIPT)
     driver.execute_script("document.body.style.zoom='80%'")
         
-    waiting_time = 30
-    logger.log(f"{waiting_time}秒以内に手動で認証してください")
     
     click_date_link(driver, days_ago, MAX_RETRIES=MAX_RETRIES)
     driver.execute_script(REMOVE_ADS_SCRIPT)
     driver.execute_script("document.body.style.zoom='80%'")
     
+    waiting_time = 10
+    logger.info(f"{waiting_time}秒以内に手動で認証してください")
     time.sleep(waiting_time)
 
     date, hall_name = click_machine_by_name(driver)
@@ -220,14 +220,13 @@ if __name__ == "__main__":
     PREF = "東京都"
     HALL_NAME = "exa-first"
     
-    # PREF = "埼玉県"
-    # HALL_NAME = "パラッツォ川越店"
-    # HALL_NAME = "第一プラザ狭山店"
+    PREF = "埼玉県"
+    HALL_NAME = "第一プラザ狭山店"
     
     URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
 
     DAYS_AGO = 1
-    RERIOD = 2
+    RERIOD = 15
 
     driver = start_google_chrome("https://www.google.com/")
 

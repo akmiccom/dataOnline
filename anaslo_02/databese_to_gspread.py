@@ -113,7 +113,7 @@ def get_medals_summary(df, start_date, end_date, model_name):
     ].copy()
 
     medals = df_tmp.pivot_table(
-        index=["model_name", "unit_no"],
+        index=["model_name", "area", "unit_no"],
         columns="date",
         values="medals",
         aggfunc="sum",
@@ -190,33 +190,40 @@ def extract_and_merge_model_data(df, model_name):
     grape_rate = pivot_results["Grape_rate"]
 
     # 7日間累積とランク
-    rolling_7d_sum = (
-        medals.iloc[:, ::-1]
-        .rolling(window=7, min_periods=1)
-        .sum()
-        .iloc[:, ::-1]
-        .iloc[:, :-6]
-    )
-    rolling_7d_sum.columns = [
-        f"{col.strftime('%y-%m-%d')}_7d_sum" for col in rolling_7d_sum.columns
-    ]
-    rolling_7d_sum = rolling_7d_sum.iloc[:, ::-1]
-    rolling_7d_rank = (
-        rolling_7d_sum.rank(method="min", ascending=True)
+    # rolling_7d_sum = (
+    #     medals.iloc[:, ::-1]
+    #     .rolling(window=7, min_periods=1)
+    #     .sum()
+    #     .iloc[:, ::-1]
+    #     .iloc[:, :-6]
+    # )
+    # rolling_7d_sum.columns = [
+    #     f"{col.strftime('%y-%m-%d')}_7d_sum" for col in rolling_7d_sum.columns
+    # ]
+    # rolling_7d_sum = rolling_7d_sum.iloc[:, ::-1]
+    # rolling_7d_rank = (
+    #     rolling_7d_sum.rank(method="min", ascending=True)
+    #     .fillna(0)
+    #     .replace([np.inf, -np.inf], 0)
+    #     .astype(int)
+    # )
+    # rolling_7d_rank.columns = [
+    #     c.replace("sum", "rank") for c in rolling_7d_rank.columns
+    # ]
+    # rolling_7d_sum = rolling_7d_sum.iloc[:, ::-1]
+    # rolling_7d_rank = rolling_7d_rank.iloc[:, ::-1]
+    medal_rank = (
+        medals.rank(method="min", ascending=True)
         .fillna(0)
         .replace([np.inf, -np.inf], 0)
         .astype(int)
     )
-    rolling_7d_rank.columns = [
-        c.replace("sum", "rank") for c in rolling_7d_rank.columns
-    ]
-    rolling_7d_sum = rolling_7d_sum.iloc[:, ::-1]
-    rolling_7d_rank = rolling_7d_rank.iloc[:, ::-1]
+    medal_rate = ((medals + game * 3) / (game * 3)).round(3)
 
     # MultiIndex化（ラベル付け）
     labeled_tables = [
-        ("RANK", rolling_7d_rank),
-        ("7D_sum", rolling_7d_sum),
+        ("RANK", medal_rank),
+        ("RATE_MEDAL", medal_rate),
         ("MEDALS", medals),
         ("GAME", game),
         ("RB_RATE", rb_rate),
@@ -293,14 +300,17 @@ if __name__ == "__main__":
 
     # 検索キーワードよりホール名取得
     SEARCH_WORD = "EXA FIRST"
-    SHEET_NAME_RANK = "7日差枚ランキング"
-    SHEET_NAME_COMPARE = "7日差枚と結果の比較"
+    SHEET_NAME_RANK = "RANKING"
+    SHEET_NAME_COMPARE = "HISTORY"
     MODEL_LIST = [
         "マイジャグラーV",
         "アイムジャグラーEX-TP",
         "ゴーゴージャグラー3",
         "ファンキージャグラー2",
         "ミスタージャグラー",
+        "ウルトラミラクルジャグラー",
+        "ジャグラーガールズ",
+        "ハッピージャグラーVIII",
     ]
     SPREADSHEET_ID = SPREADSHEET_IDS[SEARCH_WORD]
     if SEARCH_WORD not in SPREADSHEET_IDS:
@@ -326,11 +336,13 @@ if __name__ == "__main__":
     spreadsheet = connect_to_spreadsheet(SPREADSHEET_ID)
     df_from_db = search_hall_and_load_data(SEARCH_WORD, query)
     df = preprocess_result_df(df_from_db, AREA_MAP_PATH)
-    # medals_summary_to_gspread(df, MODEL_LIST, spreadsheet, get_medals_summary, sheet_name=SHEET_NAME_RANK)
+    medals_summary_to_gspread(df, MODEL_LIST, spreadsheet, get_medals_summary, sheet_name=SHEET_NAME_RANK)
 
-    merged_by_model = extract_merge_all_model_date(extract_and_merge_model_data, df, MODEL_LIST)
-    merge_all_model_date_to_gspread(merged_by_model, spreadsheet, sheet_name=SHEET_NAME_COMPARE)
-    
+    # merged_by_model = extract_merge_all_model_date(
+    #     extract_and_merge_model_data, df, MODEL_LIST)
+    # merge_all_model_date_to_gspread(
+    #     merged_by_model, spreadsheet, sheet_name=SHEET_NAME_COMPARE)
+
     # df.to_csv("for_df_check.csv", index=False, encoding="utf-8-sig")
     # logger.info(f"📁 保存完了: for_df_check.csv")
     # output_path = f"merged_by_model.csv"
