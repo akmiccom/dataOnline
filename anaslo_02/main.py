@@ -1,7 +1,7 @@
 # ============================
 # main.py
 # ============================
-from config import CSV_PATH, DB_PATH, ARCHIVE_PATH, LOG_PATH, AREA_MAP_PATH
+from config import CSV_PATH, DB_PATH, ARCHIVE_PATH, LOG_PATH
 from config import QUERY, SPREADSHEET_IDS
 import scraper
 from csv_to_database import csv_to_database
@@ -15,27 +15,38 @@ from logger_setup import setup_logger
 logger = setup_logger("main", log_file=LOG_PATH)
 
 
-PREF = "東京都"
-HALL_NAME = "EXA FIRST"
+# ============================
+
+PREF, HALL_NAME = "東京都", "EXA FIRST"
 DAYS_AGO = 1
 PERIOD = 1
 
-# HALL_NAME = "コンサートホールエフ成増"
-# DAYS_AGO = 41
-# PERIOD = 10
+# PREF, HALL_NAME = "東京都", "コンサートホールエフ成増"
+# DAYS_AGO = 1
+# PERIOD = 1
 
+# PREF, HALL_NAME = "埼玉県", "第一プラザ坂戸1000"
+# DAYS_AGO = 1
+# PERIOD = 1
 
-# PREF = "埼玉県"
-# HALL_NAME = "パールショップともえ川越店"
-# HALL_NAME = "パラッツォ川越店"
-# HALL_NAME = "第一プラザ狭山店"
-# HALL_NAME = "第一プラザ坂戸1000"
+# PREF, HALL_NAME = "埼玉県", "第一プラザ狭山店"
+# DAYS_AGO = 1
+# PERIOD = 1
+
+# PREF, HALL_NAME = "埼玉県", "パールショップともえ川越店"
+# PREF, HALL_NAME = "埼玉県", "パラッツォ川越店"
+
+SCRAPER = True
+TO_DATABESE = True
+TO_SPREADSHEET = True
+
+# ============================
 
 
 MODEL_LIST = [
     "マイジャグラーV",
-    "アイムジャグラーEX-TP",
     "ゴーゴージャグラー3",
+    "アイムジャグラーEX-TP",
     "ファンキージャグラー2",
     "ミスタージャグラー",
     "ウルトラミラクルジャグラー",
@@ -46,11 +57,9 @@ MODEL_LIST = [
 SHEET_NAME_RANK = "RANKING"
 SHEET_NAME_COMPARE = "HISTORY"
 
-log_banner("📊 ANA-SLO データ収集開始")
+AREA_MAP_PATH = f"C:/python/dataOnline/anaslo_02/json/{HALL_NAME}_area_map.json"
 
-SCRAPER = False
-TO_DATABESE = True
-TO_SPREADSHEET = True
+log_banner(f"📊 {HALL_NAME} データ収集開始")
 
 if SCRAPER:
     URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
@@ -83,5 +92,5 @@ if TO_SPREADSHEET:
         merged_by_model, spreadsheet, sheet_name=SHEET_NAME_COMPARE
     )
 
-logger.info("🎉 ANA-SLO データ収集終了")
+logger.info(f"🎉 {HALL_NAME} データ収集終了")
 logger.info("=" * 40)
