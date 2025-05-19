@@ -8,36 +8,49 @@ import numpy as np
 import json
 import sqlite3
 import datetime
+import os
+
 from dateutil.relativedelta import relativedelta
-from utils import connect_to_spreadsheet
+from utils import connect_to_spreadsheet, get_or_create_worksheet
 from logger_setup import setup_logger
-from config import LOG_PATH, DB_PATH, JSONF, SPREADSHEET_IDS
+from config import LOG_PATH, DB_PATH, SPREADSHEET_IDS, MODEL_LIST, today
 
 
 logger = setup_logger("datebase_to_gspread", log_file=LOG_PATH)
 
 
-def search_hall_and_load_data(search_word, query):
+def search_hall_and_load_data(HALL_NAME, query):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     logger.info(f"🚀 DB接続: {DB_PATH}")
     cursor.execute(
-        "SELECT hall_id, name FROM halls WHERE name LIKE ?", ("%" + search_word + "%",)
+        "SELECT hall_id, name FROM halls WHERE name LIKE ?", ("%" + HALL_NAME + "%",)
     )
     results = cursor.fetchall()
     # 結果表示
     if results:
-        logger.info(f"🔍 '{search_word}' を含むホール名の検索結果:")
-        for hall_id, hall_name in results:
-            logger.info(f" - hall_name: {hall_name}, hall_id: {hall_id}")
+        hall_id, hall_name = results[0]
+        logger.info(f"🔍 該当ホール: {hall_name}（ID: {hall_id}）")
     else:
-        logger.error(f"❌ '{search_word}' を含むホール名は見つかりませんでした。")
+        logger.error(f"❌ '{HALL_NAME}' を含むホール名は見つかりませんでした。")
+        conn.close()
+        return pd.DataFrame()
 
     df_from_db = pd.read_sql_query(query, conn, params=(hall_name,))
     conn.close()
     logger.info(f"🛑 DB接続終了: {DB_PATH}")
 
     return df_from_db
+
+
+def dataFrame_to_gspread(df, spreadsheet, sheet_name):
+    today = datetime.date.today()
+    get_or_create_worksheet(spreadsheet, sheet_name, df.shape[0]+5, df.shape[1]+3)
+    sheet = spreadsheet.worksheet(sheet_name)
+    sheet.clear()
+    set_with_dataframe(sheet, df, include_index=True)
+    sheet.update_cell(1, 1, today.strftime("UPDATED: %Y-%m-%d"))
+    logger.info(f"💾 シート更新完了: {sheet_name}")
 
 
 def grape_calculator_myfive(game, bb, rb, medals, cherry=True):
@@ -95,6 +108,9 @@ def preprocess_result_df(df, json_path):
     df["unit_last"] = df["unit_no"].astype(str).str[-1]
     df["area"] = df["unit_no"].apply(lambda x: assign_area(x, json_path))
 
+    df = df.replace([np.inf, -np.inf], np.nan)
+    df = df.fillna(0)
+
     logger.info(f"🧹 データ前処理完了: {df.shape[0]} rows")
     logger.info(f"データサイズ: {df.shape[0]} x {df.shape[1]}")
     model_list = df["model_name"].unique()
@@ -105,57 +121,88 @@ def preprocess_result_df(df, json_path):
     return df
 
 
-def get_medals_summary(df, start_date, end_date, model_name):
-    # 7日間のメダル集計
-    df_tmp = df[
-        (df["model_name"] == model_name)
-        & (df["date"].dt.date <= start_date)
-        & (df["date"].dt.date >= end_date)
-    ].copy()
-
-    medals = df_tmp.pivot_table(
-        index=["model_name", "area", "unit_no"],
-        columns="date",
-        values="medals",
-        aggfunc="sum",
-        margins=True,
-        margins_name="Total",
-    )
-    medals.drop(labels="Total", level=0, inplace=True)
-    medals["Rank"] = medals["Total"].rank(method="min", ascending=True).astype(int)
-    medals.columns = pd.MultiIndex.from_product([["MEDALS"], medals.columns])
-
-    logger.info(f"🎯 メダル集計完了: {model_name}")
-
-    return medals
-
-
-def medals_summary_to_gspread(
-    df, model_list, spreadsheet, get_medals_summary, sheet_name
+def create_pivot_table(
+    df,
+    start_date,
+    end_date,
+    pivot_targets,
+    index_targets,
+    columns_targets,
+    day_target=None,
+    date_reverse=False,
 ):
-    logger.info(f"📆 本日より7日前のデータを追加します: {sheet_name}")
+    df_filtered = df.copy()
+    df_filtered = df_filtered[
+        (df_filtered["date"].dt.date <= start_date)
+        & (df_filtered["date"].dt.date >= end_date)
+    ]
+    
+    if day_target is not None:
+        df_filtered = df_filtered[df_filtered["day"] == day_target]
 
-    today = datetime.date.today()
-    start_date = today + datetime.timedelta(days=-1)
-    end_date = today + datetime.timedelta(days=-7)
-    logger.info(f"   📍 基準日: {start_date}, 終了日: {end_date}")
+    pivot_results = {}
+    for col in pivot_targets:
+        table = df_filtered.pivot_table(
+            index=index_targets,
+            columns=columns_targets,
+            values=col,
+            aggfunc="sum",
+            margins=True,
+            margins_name="total",
+        )
+        if date_reverse:
+            pivot_results[col] = table.iloc[:, ::-1]
+        else:
+            pivot_results[col] = table
 
-    sheet = spreadsheet.worksheet(sheet_name)
-    sheet.clear()
-    next_row = 1
-    for model in model_list:
-        medals = get_medals_summary(df, start_date, end_date, model)
-        set_with_dataframe(sheet, medals, row=next_row, include_index=True)
-        existing = get_as_dataframe(sheet, evaluate_formulas=True)
-        next_row += medals.shape[0] + 5
-        logger.info(f"   ✅ 追加完了: {model}")
-    sheet.update_cell(1, 1, today.strftime("%Y-%m-%d: UPDATED"))
-    logger.info(f"💾 シート更新完了: {sheet_name}")
+    game = pivot_results["game"]
+    medals = pivot_results["medals"]
+    rb = pivot_results["RB"]
+    bb = pivot_results["BB"]
+    rb_rate = (game / rb).round(1)
+    total_rate = (game / (bb + rb)).round(1)
+    medal_rate = ((medals + game * 3) / (game * 3)).round(3)
+
+    labeled_tables = [
+        ("GAME", game),
+        ("MEDALS", medals),
+        ("RB_RATE", rb_rate),
+        ("TOTAL_RATE", total_rate),
+        ("MEDAL_RATE", medal_rate),
+        ("BB", bb),
+        ("RB", rb),
+    ]
+
+    # ラベルを MultiIndex に付ける
+    for label, df_table in labeled_tables:
+        df_table.columns = pd.MultiIndex.from_product([[label], df_table.columns])
+
+    # 列を交互に整列して統合・NaN除去
+    interleaved_cols = [
+        col
+        for pair in zip(
+            game.columns,
+            medals.columns,
+            bb.columns,
+            rb.columns,
+            medal_rate.columns,
+            rb_rate.columns,
+            total_rate.columns,
+        )
+        for col in pair
+    ]
+
+    merged = pd.concat([game, medals, medal_rate, bb, rb, rb_rate, total_rate], axis=1)[
+        interleaved_cols
+    ]
+
+    return merged, game, medals, medal_rate, bb, rb, rb_rate, total_rate
 
 
-def extract_and_merge_model_data(df, model_name, period_month=1):
+def history_data_by_model(df, model_name, period_month=1):
     start_date = datetime.date.today()
     end_date = start_date - relativedelta(months=period_month, days=start_date.day + 15)
+    logger.info(f"📆 対象期間: {end_date} 〜 {start_date}")
 
     # 対象期間のモデルのデータを抽出
     logger.info(f"🔍 モデル: {model_name} のデータを処理中...")
@@ -257,11 +304,10 @@ def extract_and_merge_model_data(df, model_name, period_month=1):
     return merged_by_area
 
 
-def extract_merge_all_model_date(process_func, df, model_list):
-
+def merge_history_by_model(process_func, df, model_list):
     merged_by_model = pd.DataFrame()
     for model_name in model_list:
-        merged_by_area = extract_and_merge_model_data(df, model_name)
+        merged_by_area = history_data_by_model(df, model_name)
         # モデル間の区切り用空行追加して結合
         if not merged_by_area.empty:
             empty_index = pd.MultiIndex.from_tuples(
@@ -279,103 +325,24 @@ def extract_merge_all_model_date(process_func, df, model_list):
     return merged_by_model
 
 
-def create_pivot_table(
-    df,
-    start_date,
-    end_date,
-    pivot_targets,
-    index_targets,
-    columns_targets,
-    csv_path,
-    hall_name,
-):
-    df_filtered = df.copy()
-    df_filtered = df_filtered[
-        (df_filtered["date"].dt.date <= start_date)
-        & (df_filtered["date"].dt.date >= end_date)
-    ]
-
-    pivot_results = {}
-    for col in pivot_targets:
-        table = df_filtered.pivot_table(
-            index=index_targets,
-            columns=columns_targets,
-            values=col,
-            aggfunc="sum",
-            margins=True,
-            margins_name="total",
-        )
-        pivot_results[col] = table
-    # pivot_results[col] = table.iloc[:, ::-1]
-
-    game = pivot_results["game"]
-    medals = pivot_results["medals"]
-    rb = pivot_results["RB"]
-    bb = pivot_results["BB"]
-    rb_rate = (game / rb).round(1)
-    total_rate = (game / (bb + rb)).round(1)
-    medal_rate = ((medals + game * 3) / (game * 3)).round(3)
-
-    labeled_tables = [
-        ("GAME", game),
-        ("MEDALS", medals),
-        ("RB_RATE", rb_rate),
-        ("TOTAL_RATE", total_rate),
-        ("MEDAL_RATE", medal_rate),
-        ("BB", bb),
-        ("RB", rb),
-    ]
-
-    # ラベルを MultiIndex に付ける
-    for label, df_table in labeled_tables:
-        df_table.columns = pd.MultiIndex.from_product([[label], df_table.columns])
-
-    # 列を交互に整列して統合・NaN除去
-    interleaved_cols = [
-        col
-        for pair in zip(
-            game.columns,
-            medals.columns,
-            bb.columns,
-            rb.columns,
-            medal_rate.columns,
-            rb_rate.columns,
-            total_rate.columns,
-        )
-        for col in pair
-    ]
-
-    merged = pd.concat([game, medals, medal_rate, bb, rb, rb_rate, total_rate], axis=1)[
-        interleaved_cols
-    ]
-    merged.to_csv(csv_path)
-
-    return medal_rate
-
-
-def medal_rate_summary_to_gspread(df, hall_name, spreadsheet):
-    today = datetime.date.today()
-    start_date = today
+def medal_rate_by_unit(df):
+    start_date = datetime.date.today()
     end_date = start_date - relativedelta(months=6, days=start_date.day - 1)
     logger.info(f"📆 対象期間: {end_date} 〜 {start_date}")
-    logger.info(f"🏢 対象ホール: {hall_name}")
 
-    csv_path = f"{hall_name}_medal_rate.csv"
     pivot_targets = ["game", "medals", "BB", "RB"]
     index_targets = ["area", "unit_no"]
     columns_targets = ["day"]
 
-    medal_rate = create_pivot_table(
+    merged, game, medals, medal_rate, bb, rb, rb_rate, total_rate = create_pivot_table(
         df,
         start_date,
         end_date,
         pivot_targets,
         index_targets,
         columns_targets,
-        csv_path,
-        hall_name,
+        date_reverse=False,
     )
-    medal_rate.to_csv(csv_path)
 
     target_rate = 1.05
     medal_rate[("MEDAL_RATE", f"count_{target_rate}+")] = (
@@ -386,56 +353,82 @@ def medal_rate_summary_to_gspread(df, hall_name, spreadsheet):
         [medal_rate, pd.DataFrame([countif], index=[(f"count_{target_rate}+", "")])],
         axis=0,
     )
-
-    sheet_name = "MEDAL_RATE"
-    rows, cols = medal_rate.shape
-    try:
-        worksheet = spreadsheet.worksheet(sheet_name)
-        logger.info(f"✅ シート「{sheet_name}」が既に存在します。")
-    except gspread.exceptions.WorksheetNotFound:
-        worksheet = spreadsheet.add_worksheet(
-            title=sheet_name, rows=str(rows + 5), cols=str(cols + 5)
-        )
-        logger.info(f"🆕 シート「{sheet_name}」を新規作成しました。")
-
-    sheet = spreadsheet.worksheet(sheet_name)
-    sheet.clear()
-    set_with_dataframe(sheet, medal_rate, include_index=True)
-    sheet.update_cell(1, 1, today.strftime("%Y-%m-%d UPDATED"))
-    logger.info(f"💾 medal_rate を GSpread に書き出しました。")
+    return medal_rate
 
 
-def merge_all_model_date_to_gspread(df, spreadsheet, sheet_name):
-    today = datetime.date.today()
-    sheet = spreadsheet.worksheet(sheet_name)
-    sheet.clear()
-    set_with_dataframe(sheet, df, include_index=True)
-    sheet.update_cell(1, 1, today.strftime("UPDATED: %Y-%m-%d"))
-    logger.info(f"💾 シート更新完了: {sheet_name}")
+def medal_rate_by_island(df):
+    start_date = datetime.date.today()
+    end_date = start_date - relativedelta(months=6, days=start_date.day - 1)
+    logger.info(f"📆 対象期間: {end_date} 〜 {start_date}")
+
+    pivot_targets = ["game", "medals", "BB", "RB"]
+    index_targets = ["area"]
+    colmns_targets = ["day"]
+    merged, game, medals, medal_rate, bb, rb, rb_rate, total_rate = create_pivot_table(
+        df,
+        start_date,
+        end_date,
+        pivot_targets,
+        index_targets,
+        colmns_targets,
+        date_reverse=False,
+    )
+    return medal_rate
+
+
+def medal_rate_by_model(df):
+    start_date = datetime.date.today()
+    end_date = start_date - relativedelta(months=6, days=start_date.day - 1)
+    logger.info(f"📆 対象期間: {end_date} 〜 {start_date}")
+
+    pivot_targets = ["game", "medals", "BB", "RB"]
+    index_targets = ["model_name"]
+    colmns_targets = ["day"]
+    merged, game, medals, medal_rate, bb, rb, rb_rate, total_rate = create_pivot_table(
+        df,
+        start_date,
+        end_date,
+        pivot_targets,
+        index_targets,
+        colmns_targets,
+        date_reverse=False,
+    )
+    return medal_rate
+
+
+def medal_rate_by_day(df, day_target):
+    start_date = datetime.date.today()
+    end_date = start_date - relativedelta(months=6, days=start_date.day - 1)
+    logger.info(f"📆 対象期間: {end_date} 〜 {start_date}")
+
+    pivot_targets = ["game", "medals", "BB", "RB"]
+    index_targets = ["area", "unit_no"]
+    columns_targets = ["date"]
+
+    merged, game, medals, medal_rate, bb, rb, rb_rate, total_rate = create_pivot_table(
+        df,
+        start_date,
+        end_date,
+        pivot_targets,
+        index_targets,
+        columns_targets,
+        day_target,
+        date_reverse=True,
+    )
+
+    merged.replace([np.inf, -np.inf, np.nan], None, inplace=True)
+    return merged
 
 
 if __name__ == "__main__":
 
-    # 検索キーワードよりホール名取得
-    SEARCH_WORD = "EXA FIRST"
-    # SEARCH_WORD = "第一プラザ坂戸1000"
-    # SEARCH_WORD = "第一プラザ狭山店"
+    # HALL_NAME = "EXA FIRST"
+    HALL_NAME = "第一プラザ坂戸1000"
+    # HALL_NAME = "第一プラザ狭山店"
 
-    SHEET_NAME_RANK = "RANKING"
-    SHEET_NAME_COMPARE = "HISTORY"
-    MODEL_LIST = [
-        "マイジャグラーV",
-        "ゴーゴージャグラー3",
-        "アイムジャグラーEX-TP",
-        "ファンキージャグラー2",
-        "ミスタージャグラー",
-        "ウルトラミラクルジャグラー",
-        "ジャグラーガールズ",
-        "ハッピージャグラーVIII",
-    ]
-    SPREADSHEET_ID = SPREADSHEET_IDS[SEARCH_WORD]
-    if SEARCH_WORD not in SPREADSHEET_IDS:
-        raise ValueError(f"{SEARCH_WORD} のスプレッドシートIDが見つかりません")
+    if HALL_NAME not in SPREADSHEET_IDS:
+        raise ValueError(f"{HALL_NAME} のスプレッドシートIDが見つかりません")
+    SPREADSHEET_ID = SPREADSHEET_IDS[HALL_NAME]
 
     query = """
     -- 出玉データにホール名と機種名を結合して取得
@@ -451,30 +444,32 @@ if __name__ == "__main__":
     ORDER BY r.date DESC, r.unit_no ASC;
     """
 
-    AREA_MAP_PATH = f"C:/python/dataOnline/anaslo_02/json/{SEARCH_WORD}_area_map.json"
+    AREA_MAP_PATH = f"C:/python/dataOnline/anaslo_02/json/{HALL_NAME}_area_map.json"
+    if not os.path.exists(AREA_MAP_PATH):
+        AREA_MAP_PATH = f"C:/python/dataOnline/anaslo_02/json/other_area_map.json"
 
     spreadsheet = connect_to_spreadsheet(SPREADSHEET_ID)
-    df_from_db = search_hall_and_load_data(SEARCH_WORD, query)
+    df_from_db = search_hall_and_load_data(HALL_NAME, query)
     df = preprocess_result_df(df_from_db, AREA_MAP_PATH)
 
-    # RANKING 用のピボット処理・出力
-    # medals_summary_to_gspread(
-    #     df, MODEL_LIST, spreadsheet, get_medals_summary, sheet_name=SHEET_NAME_RANK
-    # )
 
+    # MODEL_RATE 用のピボット処理・出力
+    model_rate = medal_rate_by_model(df)
+    dataFrame_to_gspread(model_rate, spreadsheet, sheet_name="MODEL_RATE")
+
+    # ISLAND_RATE 用のピボット処理・出力
+    island_rate = medal_rate_by_island(df)
+    dataFrame_to_gspread(island_rate, spreadsheet, sheet_name="ISLAND_RATE")
+
+    # # UNIT_RATE 用のピボット処理・出力
+    unit_rate = medal_rate_by_unit(df)
+    dataFrame_to_gspread(unit_rate, spreadsheet, sheet_name="UNIT_RATE")
+    
     # HISTORY 用のピボット処理・出力
-    merged_by_model = extract_merge_all_model_date(
-        extract_and_merge_model_data, df, MODEL_LIST
-    )
-    merge_all_model_date_to_gspread(
-        merged_by_model, spreadsheet, sheet_name=SHEET_NAME_COMPARE
-    )
+    history = merge_history_by_model(history_data_by_model, df, MODEL_LIST)
+    dataFrame_to_gspread(history, spreadsheet, sheet_name="HISTORY")
 
-    # MEDAL_RATE 用のピボット処理・出力
-    medal_rate_summary_to_gspread(df, SEARCH_WORD, spreadsheet)
-
-    # df.to_csv("for_df_check.csv", index=False, encoding="utf-8-sig")
-    # logger.info(f"📁 保存完了: for_df_check.csv")
-    # output_path = f"merged_by_model.csv"
-    # merged_by_model.to_csv(output_path, encoding="utf_8_sig")
-    # logger.info(f"📁 保存完了: {output_path}")
+    # DAY_RATE 用のピボット処理・出力
+    for day_target in range(today.day - 1, today.day + 1):
+        marged_day = medal_rate_by_day(df, day_target)
+        dataFrame_to_gspread(marged_day, spreadsheet, sheet_name=f"DAY{day_target}")

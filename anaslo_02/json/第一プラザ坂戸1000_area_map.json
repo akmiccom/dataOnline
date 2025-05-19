@@ -1,10 +1,11 @@
 [
-  {"area": "a: I'm EX-TP", "start": 663, "end": 666},
-  {"area": "b: MYV", "start": 789, "end": 808},
-  {"area": "c: GO3", "start": 809, "end": 848},
-  {"area": "d: I'm EX-TP", "start": 856, "end": 882},
-  {"area": "e: FJ2", "start": 819, "end": 826},
-  {"area": "f: UMJ", "start": 860, "end": 865},
-  {"area": "g: JGS", "start": 816, "end": 818},
-  {"area": "h: HJV3", "start": 849, "end": 855}
+  {"area": "a: アイムジャグラーEX-TP", "start": 663, "end": 666},
+  {"area": "b: マイジャグラーV", "start": 789, "end": 808},
+  {"area": "c: ゴーゴージャグラー3", "start": 809, "end": 815},
+  {"area": "c: ゴーゴージャグラー3", "start": 827, "end": 848},
+  {"area": "d: アイムジャグラーEX-TP", "start": 856, "end": 882},
+  {"area": "e: ファンキージャグラー2", "start": 819, "end": 826},
+  {"area": "f: ウルトラミラクルジャグラー", "start": 860, "end": 865},
+  {"area": "g: ジャグラーガールズ", "start": 816, "end": 818},
+  {"area": "h: ハッピージャグラーVIII", "start": 849, "end": 855}
 ]

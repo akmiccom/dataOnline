@@ -63,13 +63,13 @@ def connect_to_spreadsheet(SPREADSHEET_ID):
         return None
 
 
-def get_or_create_worksheet(spreadsheet, sheet_name, rows=1000, cols=26):
+def get_or_create_worksheet(spreadsheet, sheet_name, rows, cols):
     '''存在しないシートを自動で作成'''
     try:
         worksheet = spreadsheet.worksheet(sheet_name)
-        logger.info(f"✅ シート '{sheet_name}' が見つかりました")
+        logger.info(f"✅ シート '{sheet_name}' が見つかりました。処理を開始します")
     except gspread.exceptions.WorksheetNotFound:
-        worksheet = spreadsheet.add_worksheet(title=sheet_name, rows=rows, cols=cols)
+        worksheet = spreadsheet.add_worksheet(sheet_name, rows, cols)
         logger.info(f"🆕 シート '{sheet_name}' を新規作成しました")
     return worksheet
 
