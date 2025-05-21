@@ -201,7 +201,8 @@ def create_pivot_table(
 
 def history_data_by_model(df, model_name, period_month=1):
     start_date = datetime.date.today()
-    end_date = start_date - relativedelta(months=period_month, days=start_date.day + 15)
+    # end_date = start_date - relativedelta(months=period_month, days=start_date.day + 15)
+    end_date = start_date - relativedelta(days=45)
     logger.info(f"📆 対象期間: {end_date} 〜 {start_date}")
 
     # 対象期間のモデルのデータを抽出
@@ -248,8 +249,29 @@ def history_data_by_model(df, model_name, period_month=1):
         medals.iloc[:, ::-1].rolling(3, min_periods=3, axis=1).sum().iloc[:, ::-1]
     )
     # 7日間累積とランク
-    medal_rank = (
+    medal_rank7 = (
         rolling7.rank(method="min", ascending=True)
+        .fillna(0)
+        .replace([np.inf, -np.inf], 0)
+        .astype(int)
+    )
+    # 5日間累積とランク
+    medal_rank5 = (
+        rolling5.rank(method="min", ascending=True)
+        .fillna(0)
+        .replace([np.inf, -np.inf], 0)
+        .astype(int)
+    )
+    # 3日間累積とランク
+    medal_rank3 = (
+        rolling3.rank(method="min", ascending=True)
+        .fillna(0)
+        .replace([np.inf, -np.inf], 0)
+        .astype(int)
+    )
+    # 1日間累積とランク
+    medal_rank1 = (
+        medals.rank(method="min", ascending=True)
         .fillna(0)
         .replace([np.inf, -np.inf], 0)
         .astype(int)
@@ -257,7 +279,10 @@ def history_data_by_model(df, model_name, period_month=1):
 
     # MultiIndex化（ラベル付け）
     labeled_tables = [
-        ("RANK", medal_rank),
+        ("7RANK", medal_rank7),
+        ("5RANK", medal_rank5),
+        ("3RANK", medal_rank3),
+        ("1RANK", medal_rank1),
         ("7ROLLING", rolling7),
         ("5ROLLING", rolling5),
         ("3ROLLING", rolling3),
@@ -280,7 +305,7 @@ def history_data_by_model(df, model_name, period_month=1):
         for col in col_group
     ]
     merged = pd.concat([df for _, df in labeled_tables], axis=1)[interleaved_cols]
-    merged = merged[~merged.iloc[:, 1].isna()]  # 前日がNaNの行は削除
+    merged = merged[~merged.iloc[:, 5].isna()]  # 前日のrollingがNaNの行は削除
 
     # エリアごとに空行挿入して整形
     merged_by_area = pd.DataFrame()
@@ -422,9 +447,11 @@ def medal_rate_by_day(df, day_target):
 
 if __name__ == "__main__":
 
-    # HALL_NAME = "EXA FIRST"
-    HALL_NAME = "第一プラザ坂戸1000"
+    HALL_NAME = "EXA FIRST"
+    # HALL_NAME = "第一プラザ坂戸1000"
     # HALL_NAME = "第一プラザ狭山店"
+    HALL_NAME = "第一プラザみずほ台店"
+    # HALL_NAME = "みずほ台uno"
 
     if HALL_NAME not in SPREADSHEET_IDS:
         raise ValueError(f"{HALL_NAME} のスプレッドシートIDが見つかりません")
@@ -453,23 +480,24 @@ if __name__ == "__main__":
     df = preprocess_result_df(df_from_db, AREA_MAP_PATH)
 
 
-    # MODEL_RATE 用のピボット処理・出力
-    model_rate = medal_rate_by_model(df)
-    dataFrame_to_gspread(model_rate, spreadsheet, sheet_name="MODEL_RATE")
+    # # MODEL_RATE 用のピボット処理・出力
+    # model_rate = medal_rate_by_model(df)
+    # dataFrame_to_gspread(model_rate, spreadsheet, sheet_name="MODEL_RATE")
 
-    # ISLAND_RATE 用のピボット処理・出力
-    island_rate = medal_rate_by_island(df)
-    dataFrame_to_gspread(island_rate, spreadsheet, sheet_name="ISLAND_RATE")
+    # # ISLAND_RATE 用のピボット処理・出力
+    # island_rate = medal_rate_by_island(df)
+    # dataFrame_to_gspread(island_rate, spreadsheet, sheet_name="ISLAND_RATE")
 
-    # # UNIT_RATE 用のピボット処理・出力
-    unit_rate = medal_rate_by_unit(df)
-    dataFrame_to_gspread(unit_rate, spreadsheet, sheet_name="UNIT_RATE")
+    # # # UNIT_RATE 用のピボット処理・出力
+    # unit_rate = medal_rate_by_unit(df)
+    # dataFrame_to_gspread(unit_rate, spreadsheet, sheet_name="UNIT_RATE")
     
     # HISTORY 用のピボット処理・出力
     history = merge_history_by_model(history_data_by_model, df, MODEL_LIST)
-    dataFrame_to_gspread(history, spreadsheet, sheet_name="HISTORY")
+    # dataFrame_to_gspread(history, spreadsheet, sheet_name="HISTORY")
+    history.to_csv(f"{HALL_NAME}_history.csv", index=True)
 
-    # DAY_RATE 用のピボット処理・出力
-    for day_target in range(today.day - 1, today.day + 1):
-        marged_day = medal_rate_by_day(df, day_target)
-        dataFrame_to_gspread(marged_day, spreadsheet, sheet_name=f"DAY{day_target}")
+    # # DAY_RATE 用のピボット処理・出力
+    # for day_target in range(25, 26):
+    #     marged_day = medal_rate_by_day(df, day_target)
+    #     dataFrame_to_gspread(marged_day, spreadsheet, sheet_name=f"DAY{day_target}")

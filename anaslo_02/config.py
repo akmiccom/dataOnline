@@ -21,6 +21,7 @@ SPREADSHEET_IDS = {
     "第一プラザ坂戸1000": "170MVr-BB3LG-g5ItkDT-8TE6R68RW9zJhRfpvQiy-PE",
     "第一プラザみずほ台店": "1_1722pigi_Z1D6eH0tsPfMneGoS9O09fyqD6F-h1mQA",
     "パールショップともえ川越店": "1i70joJ27Hs7inS-D89z9YMSJO1aRvaBeeWn0n9xpktY",
+    "みずほ台uno": "1PhH3DbHjUTmsE0yJ7U85KKeFwqtSD7x7VZvTD7ZQO74",
     }
 
 MODEL_LIST = [
