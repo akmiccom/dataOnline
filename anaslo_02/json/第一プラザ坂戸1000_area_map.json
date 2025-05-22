@@ -1,11 +1,12 @@
 [
   {"area": "a: アイムジャグラーEX-TP", "start": 663, "end": 666},
-  {"area": "b: マイジャグラーV", "start": 789, "end": 808},
-  {"area": "c: ゴーゴージャグラー3", "start": 809, "end": 815},
-  {"area": "c: ゴーゴージャグラー3", "start": 827, "end": 848},
-  {"area": "d: アイムジャグラーEX-TP", "start": 856, "end": 882},
+  {"area": "b: アイムジャグラーEX-TP", "start": 856, "end": 859},
+  {"area": "c: アイムジャグラーEX-TP", "start": 866, "end": 882},
+  {"area": "d: マイジャグラーV", "start": 789, "end": 808},
   {"area": "e: ファンキージャグラー2", "start": 819, "end": 826},
   {"area": "f: ウルトラミラクルジャグラー", "start": 860, "end": 865},
   {"area": "g: ジャグラーガールズ", "start": 816, "end": 818},
-  {"area": "h: ハッピージャグラーVIII", "start": 849, "end": 855}
+  {"area": "h: ハッピージャグラーVIII", "start": 849, "end": 855},
+  {"area": "i: ゴーゴージャグラー3", "start": 809, "end": 815},
+  {"area": "i: ゴーゴージャグラー3", "start": 827, "end": 848}
 ]
