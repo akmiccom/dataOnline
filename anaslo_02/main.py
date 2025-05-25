@@ -22,21 +22,25 @@ logger = setup_logger("main", log_file=LOG_PATH)
 # ============================
 
 HALL_LIST = [
-    ("東京都", "EXA FIRST", 1, 1),
-    ("東京都", "コンサートホールエフ成増", 1, 1),
+    # ("東京都", "EXA FIRST", 1, 1),
+    # ("東京都", "コンサートホールエフ成増", 1, 1),
     # ("埼玉県", "第一プラザ坂戸1000", 1, 1),
     # ("埼玉県", "第一プラザ狭山店", 1, 1),
     # ("埼玉県", "みずほ台uno", 1, 1),
-    # ("埼玉県", "第一プラザみずほ台店", 1, 1),
     # ("埼玉県", "オータ志木駅前店", 1, 1),
-    # ("埼玉県", "グランドオータ新座駅前店", 104, 300),
+    # ("埼玉県", "グランドオータ新座駅前店", 1, 1),
+    # ("埼玉県", "第一プラザ坂戸にっさい店", 1, 1),
+    # ("埼玉県", "toho川越店", 1, 1),
+    # ("埼玉県", "第一プラザみずほ台店", 1, 1),
+    ("埼玉県", "グランドオータ新座駅前店", 200, 300),
+    # ("埼玉県", "ニュークラウン川越2号店", 100, 100),
     # ("埼玉県", "パールショップともえ川越店", 1, 1),
     # ("埼玉県", "パラッツォ川越店", 1, 1),
 ]
 
 SCRAPER = True
 TO_DATABESE = True
-TO_SPREADSHEET = True
+TO_SPREADSHEET = False
 
 # ============================
 
@@ -83,7 +87,7 @@ for PREF, HALL_NAME, DAYS_AGO, PERIOD in HALL_LIST:
         dataFrame_to_gspread(history, spreadsheet, sheet_name="HISTORY")
 
         # DAY_RATE 用のピボット処理・出力
-        for day_target in range(today.day - 1, today.day + 2):
+        for day_target in range(today.day - 1, today.day + 3):
             marged_day = medal_rate_by_day(df, day_target)
             dataFrame_to_gspread(marged_day, spreadsheet, sheet_name=f"DAY{day_target}")
     
