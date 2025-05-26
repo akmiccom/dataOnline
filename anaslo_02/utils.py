@@ -74,6 +74,8 @@ def get_or_create_worksheet(spreadsheet, sheet_name, rows, cols):
     return worksheet
 
 
+
+
 def get_existing_worksheet(spreadsheet, sheet_name):
     '''シートがなければログを出して中断'''
     try:
