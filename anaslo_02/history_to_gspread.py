@@ -78,12 +78,12 @@ def history_by_unit(df):
             ("GAME", game),
             ("RATE_MEDAL", medal_rate),
             ("MEDALS", medals),
-            ("3ROLLING", rolling3),
-            ("5ROLLING", rolling5),
+            # ("3ROLLING", rolling3),
+            # ("5ROLLING", rolling5),
             ("7ROLLING", rolling7),
             ("1RANK", medal_rank1),
-            ("3RANK", medal_rank3),
-            ("5RANK", medal_rank5),
+            # ("3RANK", medal_rank3),
+            # ("5RANK", medal_rank5),
             ("7RANK", medal_rank7),
         ]
         for label, df_table in labeled_tables:
