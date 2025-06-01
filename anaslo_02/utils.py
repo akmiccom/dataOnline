@@ -5,6 +5,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import gspread
 import subprocess
 import sys
+import json
 import pkg_resources
 import requests
 from logger_setup import setup_logger
@@ -92,6 +93,13 @@ def log_banner(title: str):
     logger.info("=" * 40)
     logger.info("         ANA-SLO データ収集         ")
     logger.info("=" * 40)
+
+
+
+
+jagglar_rate_path = r"C:\python\dataOnline\anaslo_02\json\jagglar_rate.json"
+with open(jagglar_rate_path, "r", encoding="utf-8") as f:
+    MODEL_DATA_DICT = json.load(f)
 
 
 if __name__ == "__main__":

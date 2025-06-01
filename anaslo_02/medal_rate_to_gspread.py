@@ -4,6 +4,7 @@
 from gspread_dataframe import set_with_dataframe
 import pandas as pd
 import numpy as np
+from scipy.stats import poisson
 import json
 import sqlite3
 import datetime
@@ -12,6 +13,7 @@ from dateutil.relativedelta import relativedelta
 import os
 
 from utils import connect_to_spreadsheet, get_or_create_worksheet
+from utils import MODEL_DATA_DICT
 from logger_setup import setup_logger
 from config import LOG_PATH, DB_PATH, SPREADSHEET_IDS, MODEL_LIST, GRAPE_CONSTANTS
 
@@ -122,41 +124,51 @@ def assign_area(unit_no, json_file_path):
     return "その他"
 
 
-# def preprocess_result_df(df, json_path):
-#     # データ前処理
-#     df["date"] = pd.to_datetime(df["date"])
-#     df.drop(columns=["result_id", "hall_id", "model_id"], inplace=True)
-#     df = df[
-#         ["hall_name", "date", "model_name", "unit_no", "game", "BB", "RB", "medals"]
-#     ]
-#     df["BB"] = df["BB"].replace(0, np.nan)
-#     df["RB"] = df["RB"].replace(0, np.nan)
-#     df["BB_rate"] = (df["game"] / df["BB"]).round(1)
-#     df["RB_rate"] = (df["game"] / df["RB"]).round(1)
-#     df["Total_rate"] = (df["game"] / (df["BB"] + df["RB"])).round(1)
-#     # df["Grape_rate"] = grape_calculator_myfive(
-#     #     df["game"], df["BB"], df["RB"], df["medals"], cherry=True
-#     # ).round(2)
-#     df["Grape_rate"] = df.apply(
-#         lambda row: calc_grape_rate(row, GRAPE_CONSTANTS), axis=1
-#     )
-#     df["day"] = df["date"].dt.day
-#     df["month"] = df["date"].dt.month
-#     df["weekday"] = df["date"].dt.weekday
-#     df["unit_last"] = df["unit_no"].astype(str).str[-1]
-#     df["area"] = df["unit_no"].apply(lambda x: assign_area(x, json_path))
+# 設定推定関数
+def estimate_setting_probs(row, limit_games=5000):
+    # JSONファイルの確率表を読み込む
+    model = row["model_name"]
+    games = row["game"]
+    if games < limit_games or pd.isna(row["RB_rate"]) or pd.isna(row["Total_rate"]):
+        return {f"設定{i}": 0.0 for i in range(1, 7)}
+    use_grape = not pd.isna(row["Grape_rate"]) and row["Grape_rate"] != 0
+    rb_actual = row["RB"]
+    total_actual = row["BB"] + row["RB"]
+    if use_grape:
+        grape_actual = round(games / row["Grape_rate"])
 
-#     df = df.replace([np.inf, -np.inf], np.nan)
-#     df = df.fillna(0)
+    model_data = MODEL_DATA_DICT.get(model)
+    if not model_data:
+        return {f"設定{i}": 0.0 for i in range(1, 7)}
 
-#     logger.info(f"🧹 データ前処理完了: {df.shape[0]} rows")
-#     logger.info(f"データサイズ: {df.shape[0]} x {df.shape[1]}")
-#     model_list = df["model_name"].unique()
-#     logger.debug(f"データベースからのデータには以下のモデルが含まれています")
-#     for i, model in enumerate(model_list):
-#         logger.debug(f"{i}: {model}")
+    likelihoods = {}
+    for setting, values in model_data.items():
+        try:
+            rb_rate = float(values["RB_RATE"].split("/")[1])
+            total_rate = float(values["TOTAL_RATE"].split("/")[1])
+            grape_rate = float(values["GRAPE_RATE"].split("/")[1])
+            expected_rb = games / rb_rate
+            expected_total = games / total_rate
+            expected_grape = games / grape_rate
+            rb_likelihood = poisson.pmf(rb_actual, expected_rb)
+            total_likelihood = poisson.pmf(total_actual, expected_total)
+            # Grapeを使うかどうか
+            if use_grape:
+                grape_rate = float(values["GRAPE_RATE"].split("/")[1])
+                expected_grape = games / grape_rate
+                grape_likelihood = poisson.pmf(grape_actual, expected_grape)
+                likelihood = rb_likelihood * total_likelihood * grape_likelihood
+            else:
+                likelihood = rb_likelihood * total_likelihood
 
-#     return df
+            likelihoods[int(setting)] = likelihood
+        except:
+            continue
+    total_sum = sum(likelihoods.values())
+    if total_sum == 0:
+        return {f"設定{i}": 0.0 for i in range(1, 7)}
+    probs = {f"設定{s}": round(l / total_sum, 2) for s, l in likelihoods.items()}
+    return probs
 
 
 def df_preprocessing(df, hall_name):
@@ -171,25 +183,24 @@ def df_preprocessing(df, hall_name):
     df_pre = df_pre[df_pre_columns]
     df_pre["BB_rate"] = (df_pre["game"] / df_pre["BB"]).round(1)
     df_pre["RB_rate"] = (df_pre["game"] / df_pre["RB"]).round(1)
-    # df_pre["Grape_rate"] = grape_calc_myfive(
-    #     df_pre["game"], df_pre["BB"], df_pre["RB"], df_pre["medals"], cherry=True).round(2)
-    
     df_pre["Grape_rate"] = df_pre.apply(lambda row: calc_grape_rate(row, GRAPE_CONSTANTS), axis=1)
     df_pre["Total_rate"] = (df_pre["game"] / (df_pre["BB"] + df_pre["RB"])).round(1)
+    
     df_pre["month"] = df_pre["date"].dt.strftime("%Y-%m")
     df_pre["day"] = df_pre["date"].dt.day
     df_pre["weekday"] = df_pre["date"].dt.weekday
     df_pre["year"] = df_pre["date"].dt.year
     df_pre["unit_last"] = df_pre["unit_no"].astype(str).str[-1]
-
     df_pre["area"] = df_pre["unit_no"].apply(lambda x: assign_area(x, json_path))
+
+    # 設定推定
+    df_probs = df_pre.apply(estimate_setting_probs, axis=1, result_type="expand")
+    df_pre["5more"] = df_probs[["設定5", "設定6"]].sum(axis=1)
     
     df_pre.replace([np.inf, -np.inf], np.nan, inplace=True)
     df_pre = df_pre.fillna(0)
 
     model_list = list(df["model_name"].unique())
-    # for i, model in enumerate(model_list):
-    #     print(f"{i+1}: {model}", end=", ")
 
     return df_pre, model_list
 
@@ -279,157 +290,6 @@ def create_pivot_table(
     }
 
     return merged, details
-
-
-# def history_data_by_model(df, model_name, period_month=1):
-#     start_date = datetime.date.today()
-#     # end_date = start_date - relativedelta(months=period_month, days=start_date.day + 15)
-#     end_date = start_date - relativedelta(days=45)
-#     logger.info(f"📆 対象期間: {end_date} 〜 {start_date}")
-
-#     # 対象期間のモデルのデータを抽出
-#     logger.info(f"🔍 モデル: {model_name} のデータを処理中...")
-#     df_filtered = df.copy()
-#     df_filtered = df_filtered[
-#         (df_filtered["date"].dt.date <= start_date)
-#         & (df_filtered["date"].dt.date >= end_date)
-#     ]
-#     df_filtered = df_filtered[(df_filtered["model_name"] == model_name)]
-#     if df_filtered.empty:
-#         logger.warning(f"⚠️ モデル: {model_name} の期間中のデータが見つかりませんでした")
-#         return pd.DataFrame()
-
-#     # 各種ピボットテーブル
-#     pivot_targets = ["medals", "game", "RB_rate", "Total_rate", "Grape_rate"]
-#     index_targets = ["area", "model_name", "unit_no"]
-#     columns_targets = ["date"]
-#     pivot_results = {}
-#     for col in pivot_targets:
-#         table = df_filtered.pivot_table(
-#             index=index_targets,
-#             columns=columns_targets,
-#             values=col,
-#             aggfunc="sum",
-#         )
-#         # 日付列を反転・スライス
-#         pivot_results[col] = table.iloc[:, 7:].iloc[:, ::-1]
-
-#     medals = pivot_results["medals"]
-#     game = pivot_results["game"]
-#     rb_rate = pivot_results["RB_rate"]
-#     total_rate = pivot_results["Total_rate"]
-#     grape_rate = pivot_results["Grape_rate"]
-#     medal_rate = ((medals + game * 3) / (game * 3)).round(3)
-#     # メダル累積3日間・7日間
-#     rolling7 = (
-#         medals.iloc[:, ::-1].rolling(7, min_periods=7, axis=1).sum().iloc[:, ::-1]
-#     )
-#     rolling5 = (
-#         medals.iloc[:, ::-1].rolling(5, min_periods=3, axis=1).sum().iloc[:, ::-1]
-#     )
-#     rolling3 = (
-#         medals.iloc[:, ::-1].rolling(3, min_periods=3, axis=1).sum().iloc[:, ::-1]
-#     )
-#     # 7日間累積とランク
-#     medal_rank7 = (
-#         rolling7.rank(method="min", ascending=True)
-#         .fillna(0)
-#         .replace([np.inf, -np.inf], 0)
-#         .astype(int)
-#     )
-#     # 5日間累積とランク
-#     medal_rank5 = (
-#         rolling5.rank(method="min", ascending=True)
-#         .fillna(0)
-#         .replace([np.inf, -np.inf], 0)
-#         .astype(int)
-#     )
-#     # 3日間累積とランク
-#     medal_rank3 = (
-#         rolling3.rank(method="min", ascending=True)
-#         .fillna(0)
-#         .replace([np.inf, -np.inf], 0)
-#         .astype(int)
-#     )
-#     # 1日間累積とランク
-#     medal_rank1 = (
-#         medals.rank(method="min", ascending=True)
-#         .fillna(0)
-#         .replace([np.inf, -np.inf], 0)
-#         .astype(int)
-#     )
-
-#     # MultiIndex化（ラベル付け）
-#     labeled_tables = [
-#         ("7RANK", medal_rank7),
-#         ("5RANK", medal_rank5),
-#         ("3RANK", medal_rank3),
-#         ("1RANK", medal_rank1),
-#         ("7ROLLING", rolling7),
-#         ("5ROLLING", rolling5),
-#         ("3ROLLING", rolling3),
-#         ("MEDALS", medals),
-#         ("RATE_MEDAL", medal_rate),
-#         ("GAME", game),
-#         ("RB_RATE", rb_rate),
-#         ("TOTAL_RATE", total_rate),
-#         ("GRAPE_RATE", grape_rate),
-#     ]
-
-#     # ラベルを MultiIndex に付ける
-#     for label, df_table in labeled_tables:
-#         df_table.columns = pd.MultiIndex.from_product([[label], df_table.columns])
-
-#     # 列を交互に整列して統合・NaN除去
-#     interleaved_cols = [
-#         col
-#         for col_group in zip(*(df.columns for _, df in labeled_tables))
-#         for col in col_group
-#     ]
-#     merged = pd.concat([df for _, df in labeled_tables], axis=1)[interleaved_cols]
-#     merged = merged[~merged.iloc[:, 5].isna()]  # 前日のrollingがNaNの行は削除
-
-#     # エリアごとに空行挿入して整形
-#     merged_by_area = pd.DataFrame()
-#     for area in merged.index.get_level_values("area").unique():
-#         area_merged = merged.xs(area, level="area", drop_level=False)
-#         if not area_merged.empty:
-#             empty_index = pd.MultiIndex.from_tuples(
-#                 [("", " ", " ")], names=merged.index.names
-#             )
-#             empty_row = pd.DataFrame(
-#                 [[""] * area_merged.shape[1]],
-#                 index=empty_index,
-#                 columns=area_merged.columns,
-#             )
-#             merged_by_area = pd.concat([merged_by_area, area_merged, empty_row])
-
-#     # インデックス削除
-#     merged_by_area = merged_by_area.droplevel("area")
-#     logger.info(f"✅ モデル: {model_name} の処理完了（行数: {len(merged_by_area)}）")
-
-#     return merged_by_area
-
-
-# def merge_history_by_model(process_func, df, model_list):
-#     merged_by_model = pd.DataFrame()
-#     for model_name in model_list:
-#         merged_by_area = history_data_by_model(df, model_name)
-#         # モデル間の区切り用空行追加して結合
-#         if not merged_by_area.empty:
-#             empty_index = pd.MultiIndex.from_tuples(
-#                 [(" ", " ")], names=merged_by_area.index.names
-#             )
-#             empty_row = pd.DataFrame(
-#                 [[""] * merged_by_area.shape[1]],
-#                 index=empty_index,
-#                 columns=merged_by_area.columns,
-#             )
-#             merged_by_model = pd.concat(
-#                 [merged_by_model, merged_by_area, empty_row], axis=0
-#             )
-
-#     return merged_by_model
 
 
 def medal_rate_by_model(df):
@@ -549,7 +409,7 @@ if __name__ == "__main__":
     
     df_db = create_df_from_database(HALL_NAME, start_date, end_date, model_name=model_name)
     df, model_list = df_preprocessing(df_db, HALL_NAME)
-    # df.to_csv(f"anaslo_02/out/{HALL_NAME}_df_preprocessing.csv", index=True)
+    df.to_csv(f"anaslo_02/out/{HALL_NAME}_df_preprocessing.csv", index=True)
 
 
     # MODEL_RATE 用のピボット処理・出力

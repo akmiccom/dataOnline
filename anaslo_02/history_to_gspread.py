@@ -3,6 +3,8 @@
 # ============================
 import pandas as pd
 import numpy as np
+from scipy.stats import poisson
+import json
 import datetime
 import os
 from dateutil.relativedelta import relativedelta
@@ -16,23 +18,10 @@ from config import LOG_PATH, SPREADSHEET_IDS
 logger = setup_logger("datebase_to_gspread", log_file=LOG_PATH)
 
 
-# def dataFrame_to_gspread(df, spreadsheet, sheet_name):
-#     today = datetime.date.today()
-#     get_or_create_worksheet(spreadsheet, sheet_name, df.shape[0] + 5, df.shape[1] + 3)
-#     sheet = spreadsheet.worksheet(sheet_name)
-#     sheet.clear()
-#     set_with_dataframe(sheet, df, include_index=True)
-#     sheet.update_cell(1, 1, today.strftime("UPDATED: %Y-%m-%d"))
-#     logger.info(f"💾 シート更新完了: {sheet_name}")
-
-
-
-
-
 def history_by_unit(df):
     merged_by_unit = pd.DataFrame()
     
-    pivot_targets = ["medals", "game", "RB_rate", "Total_rate", "Grape_rate"]
+    pivot_targets = ["medals", "game", "RB_rate", "Total_rate", "Grape_rate", "5more"]
     index_targets = ["area", "model_name", "unit_no"]
     columns_targets = ["date"]
 
@@ -55,6 +44,7 @@ def history_by_unit(df):
         rb_rate = pivot_results["RB_rate"]
         total_rate = pivot_results["Total_rate"]
         grape_rate = pivot_results["Grape_rate"]
+        more5 = pivot_results["5more"]
         medal_rate = ((medals + game * 3) / (game * 3)).round(3)
         
         # ランキング列作成
@@ -72,17 +62,18 @@ def history_by_unit(df):
 
         # MultiIndex化（ラベル付け）
         labeled_tables = [
+            ("5MORE", more5),
             ("GRAPE_RATE", grape_rate),
             ("TOTAL_RATE", total_rate),
             ("RB_RATE", rb_rate),
             ("GAME", game),
             ("RATE_MEDAL", medal_rate),
             ("MEDALS", medals),
-            # ("3ROLLING", rolling3),
+            ("3ROLLING", rolling3),
             # ("5ROLLING", rolling5),
             ("7ROLLING", rolling7),
             ("1RANK", medal_rank1),
-            # ("3RANK", medal_rank3),
+            ("3RANK", medal_rank3),
             # ("5RANK", medal_rank5),
             ("7RANK", medal_rank7),
         ]
@@ -144,11 +135,11 @@ if __name__ == "__main__":
     
     HALL_LIST = [
         ("東京都", "EXA FIRST", 1, 1),
-        ("東京都", "コンサートホールエフ成増", 1, 1),
-        ("埼玉県", "第一プラザ坂戸1000", 1, 1),
-        ("埼玉県", "第一プラザ狭山店", 1, 1),
-        ("埼玉県", "みずほ台uno", 1, 1),
-        ("埼玉県", "第一プラザみずほ台店", 1, 1),
+        # ("東京都", "コンサートホールエフ成増", 1, 1),
+        # ("埼玉県", "第一プラザ坂戸1000", 1, 1),
+        # ("埼玉県", "第一プラザ狭山店", 1, 1),
+        # ("埼玉県", "みずほ台uno", 1, 1),
+        # ("埼玉県", "第一プラザみずほ台店", 1, 1),
     ]
     
     model_name = "ジャグラー"
@@ -182,7 +173,7 @@ if __name__ == "__main__":
         start_date = datetime.date(today.year, today.month-1, 1) - relativedelta(days=6)
         df_db = create_df_from_database(HALL_NAME, start_date, today, model_name=model_name)
         df, model_list = df_preprocessing(df_db, HALL_NAME)
-
+        
         # HISTORY 用のピボット処理・出力
         merged_by_unit = history_by_unit(df)
         merged_by_unit.to_csv(f"anaslo_02/out/{HALL_NAME}_history_by_unit.csv", index=True)
