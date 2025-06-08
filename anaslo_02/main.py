@@ -26,7 +26,7 @@ logger = setup_logger("main", log_file=LOG_PATH)
 # ============================
 
 HALL_LIST = [
-    # ("東京都", "EXA FIRST", 1, 2),
+    ("東京都", "EXA FIRST", 1, 2),
     ("東京都", "コンサートホールエフ成増", 1, 2),
     ("埼玉県", "ニュークラウン川越2号店", 1, 2),
     ("埼玉県", "第一プラザ狭山店", 1, 2),
@@ -46,7 +46,7 @@ model_name = "ジャグラー"
 
 SCRAPER = True
 TO_SPREADSHEET = True
-SCRAPER = False
+# SCRAPER = False
 # TO_SPREADSHEET = False
 
 # ============================

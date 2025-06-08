@@ -27,7 +27,7 @@ def create_df_from_database(hall_name, start_date, end_date, model_name=None):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;")
-    tables = cursor.fetchall()
+    # tables = cursor.fetchall()
     # print(tables)
 
     cursor.execute(
@@ -38,9 +38,9 @@ def create_df_from_database(hall_name, start_date, end_date, model_name=None):
     # 結果表示
     if results:
         hall_id, hall_name = results[0]
-        print(f"🔍 '{hall_name}' を含むホール名が見つかりました。")
+        logger.info(f"🔍 '{hall_name}' を含むホール名が見つかりました。")
     else:
-        print(f"❌ '{hall_name}' を含むホール名は見つかりませんでした。")
+        logger.info(f"❌ '{hall_name}' を含むホール名は見つかりませんでした。")
 
     query = """
         -- 出玉データにホール名と機種名を結合して取得
@@ -63,9 +63,9 @@ def create_df_from_database(hall_name, start_date, end_date, model_name=None):
     query += " ORDER BY r.date DESC, r.unit_no ASC"
 
     df = pd.read_sql_query(query, conn, params=params)
-    print(f"データサイズ: {df.shape[0]} x {df.shape[1]}")
-    print(f"📅 検索期間: {start_date} ～ {end_date}", f"📅 抽出期間: {df.date.min()} ～ {df.date.max()}")
-    print(f'含まれる日数 : {df["date"].nunique()}')
+    logger.info(f"データサイズ: {df.shape[0]} x {df.shape[1]}")
+    logger.info(f"📅 検索期間: {start_date} ～ {end_date}", f"📅 抽出期間: {df.date.min()} ～ {df.date.max()}")
+    logger.info(f'含まれる日数 : {df["date"].nunique()}')
 
     return df
 
@@ -111,7 +111,7 @@ def calc_grape_rate(row, constants, cherry=True):
         return round(grape, 2)
 
     except Exception as e:
-        print(f"⚠️ Grape計算失敗: {model} → {e}")
+        logger.error(f"⚠️ Grape計算失敗: {model} → {e}")
         return None
 
 
@@ -175,7 +175,7 @@ def df_preprocessing(df, hall_name):
     json_path = f"C:/python/dataOnline/anaslo_02/json/{hall_name}_area_map.json"
     if not os.path.exists(json_path):
         json_path = f"C:/python/dataOnline/anaslo_02/json/other_area_map.json"
-    print(f"データ前処理を行います")
+    logger.info(f"データ前処理を行います")
     df_pre = df.copy()
     df_pre["date"] = pd.to_datetime(df_pre["date"])
     df_pre.drop(columns=["result_id", "hall_id", "model_id"], inplace=True)
@@ -183,7 +183,7 @@ def df_preprocessing(df, hall_name):
     df_pre = df_pre[df_pre_columns]
     df_pre["BB_rate"] = (df_pre["game"] / df_pre["BB"]).round(1)
     df_pre["RB_rate"] = (df_pre["game"] / df_pre["RB"]).round(1)
-    df_pre["Grape_rate"] = df_pre.apply(lambda row: calc_grape_rate(row, GRAPE_CONSTANTS), axis=1)
+    df_pre["Grape_rate"] = df_pre.apply(lambda row: calc_grape_rate(row, GRAPE_CONSTANTS, cherry=False), axis=1)
     df_pre["Total_rate"] = (df_pre["game"] / (df_pre["BB"] + df_pre["RB"])).round(1)
     
     df_pre["month"] = df_pre["date"].dt.strftime("%Y-%m")
