@@ -65,6 +65,13 @@
       "CHERRY_RB_RATE": "1/1092.27",
       "MACHINE_RATE": "97.83%",
       "GRAPE_RATE": "1/5.90"
+    },
+    "grape_contents": {
+      "bb": 239.25,
+      "rb": 95.25,
+      "replay": 0.411,
+      "cherryOff": 0.05847,
+      "cherryOn": 0.04228
     }
   },
   "ゴーゴージャグラー3": {
@@ -109,6 +116,13 @@
       "TOTAL_RATE": "1/149.6",
       "GRAPE_RATE": "1/6.25",
       "MACHINE_RATE": "98.39%"
+    },
+    "grape_contents": {
+      "bb": 239.0,
+      "rb": 95.0,
+      "replay": 0.411,
+      "cherryOff": 0.0661,
+      "cherryOn": 0.0372
     }
   },
   "アイムジャグラーEX-TP": {
@@ -147,6 +161,13 @@
       "RB_RATE": "1/439.8",
       "GRAPE_RATE": "1/6.02",
       "TOTAL_RATE": "1/168.5"
+    },
+    "grape_contents": {
+      "bb": 251.25,
+      "rb": 95.25,
+      "replay": 0.411,
+      "cherryOff": 0.06068,
+      "cherryOn": 0.040475
     }
   },
   "ファンキージャグラー2": {
@@ -185,6 +206,13 @@
       "RB_RATE": "1/439.8",
       "GRAPE_RATE": "1/5.94",
       "TOTAL_RATE": "1/165.9"
+    },
+    "grape_contents": {
+      "bb": 239.25,
+      "rb": 95.25,
+      "replay": 0.411,
+      "cherryOff": 0.0603,
+      "cherryOn": 0.04324
     }
   },
   "ハッピージャグラーVIII": {

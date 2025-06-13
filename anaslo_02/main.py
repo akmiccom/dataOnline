@@ -55,21 +55,20 @@ if SCRAPER:
     upgrade_uc_if_needed()
     driver = scraper.start_google_chrome("https://www.google.com/")
 
-    for PREF, HALL_NAME, DAYS_AGO, PERIOD in HALL_LIST:
-        log_banner(f"📊 {HALL_NAME} データ収集開始")
-        if SCRAPER:
-            URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
-            for days_ago in range(DAYS_AGO, DAYS_AGO + PERIOD):
-                scraper.scraper_for_data(
-                    driver, days_ago, scraper.REMOVE_ADS_SCRIPT, CSV_PATH, PREF, URL
-                )
-                time.sleep(60)
+for PREF, HALL_NAME, DAYS_AGO, PERIOD in HALL_LIST:
+    log_banner(f"📊 {HALL_NAME} データ収集開始")
+    if SCRAPER:
+        URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
+        for days_ago in range(DAYS_AGO, DAYS_AGO + PERIOD):
+            scraper.scraper_for_data(
+                driver, days_ago, scraper.REMOVE_ADS_SCRIPT, CSV_PATH, PREF, URL
+            )
+            time.sleep(60)
 
-if TO_SPREADSHEET:
+    if TO_SPREADSHEET:
     # データベースからデータ取得と前処理
-    csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH)
-    
-    for PREF, HALL_NAME, DAYS_AGO, PERIOD in HALL_LIST:    
+        csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH)
+
         last_month = today - relativedelta(months=1)
         month_ago = today - relativedelta(months=6)
         last_day = calendar.monthrange(last_month.year, last_month.month)[1]
