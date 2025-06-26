@@ -28,18 +28,19 @@ logger = setup_logger("main", log_file=LOG_PATH)
 HALL_LIST = [
     ("東京都", "EXA FIRST", 1, 2),
     ("東京都", "コンサートホールエフ成増", 1, 2),
-    ("埼玉県", "ニュークラウン川越2号店", 1, 2),
-    ("埼玉県", "第一プラザ狭山店", 1, 2),
-    ("埼玉県", "第一プラザ坂戸1000", 1, 2),
+    ("埼玉県", "ニューダイエイiii", 1, 2),
+    ("埼玉県", "パールショップともえ川越店", 1, 2),
     ("埼玉県", "第一プラザみずほ台店", 1, 2),
     ("埼玉県", "みずほ台uno", 1, 2),
+    ("埼玉県", "第一プラザ坂戸1000", 1, 2),
+    ("埼玉県", "第一プラザ狭山店", 1, 2),
+    ("埼玉県", "ニュークラウン川越2号店", 1, 2),
     ("埼玉県", "第一プラザ坂戸にっさい店", 1, 2),
     ("埼玉県", "toho川越店", 1, 2),
     ("埼玉県", "オータ志木駅前店", 1, 2),
     ("埼玉県", "グランドオータ新座駅前店", 1, 2),
-    ("埼玉県", "ニューダイエイiii", 1, 2),
-    # ("埼玉県", "パールショップともえ川越店", 1, 1),
-    # ("埼玉県", "パラッツォ川越店", 1, 1),
+    ("東京都", "楽園大山店", 1, 2),
+    ("茨城県", "レイト平塚", 1, 2),
 ]
 
 model_name = "ジャグラー"
@@ -47,7 +48,6 @@ model_name = "ジャグラー"
 SCRAPER = True
 TO_SPREADSHEET = True
 # SCRAPER = False
-# TO_SPREADSHEET = False
 
 # ============================
 
@@ -66,13 +66,16 @@ for PREF, HALL_NAME, DAYS_AGO, PERIOD in HALL_LIST:
             time.sleep(60)
 
     if TO_SPREADSHEET:
-    # データベースからデータ取得と前処理
+        # スプレッドシートに接続
+        spreadsheet = connect_to_spreadsheet(SPREADSHEET_IDS[HALL_NAME])
+        
+        # データベースからデータ取得と前処理
         csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH)
 
         last_month = today - relativedelta(months=1)
-        month_ago = today - relativedelta(months=6)
+        month_ago = today - relativedelta(months=10)
         last_day = calendar.monthrange(last_month.year, last_month.month)[1]
-        end_date = datetime.date(last_month.year, last_month.month, last_day)
+        end_date = datetime.date(last_month.year, today.month, today.day)
         last_day = calendar.monthrange(month_ago.year, month_ago.month)[1]
         start_date = datetime.date(month_ago.year, month_ago.month, last_day)
         
@@ -82,18 +85,21 @@ for PREF, HALL_NAME, DAYS_AGO, PERIOD in HALL_LIST:
         # # MODEL_RATE 用のピボット処理・出力
         # model_rate = medal_rate_by_model(df)
         # model_rate.to_csv(f"anaslo_02/out/{HALL_NAME}_model_rate.csv", index=True)
+        # dataFrame_to_gspread(model_rate, spreadsheet, sheet_name="MODEL_RATE")
 
         # # ISLAND_RATE 用のピボット処理・出力
         # island_rate = medal_rate_by_island(df)
         # island_rate.to_csv(f"anaslo_02/out/{HALL_NAME}_island_rate.csv", index=True)
+        # dataFrame_to_gspread(island_rate, spreadsheet, sheet_name="ISLAND_RATE")
 
         # # UNIT_RATE 用のピボット処理・出力
         # unit_rate = medal_rate_by_unit(df)
         # unit_rate.to_csv(f"anaslo_02/out/{HALL_NAME}_unit_rate.csv", index=True)
+        # dataFrame_to_gspread(unit_rate, spreadsheet, sheet_name="UNIT_RATE")
 
         # # DAY_RATE 用のピボット処理・出力
         # for day_target in range(today.day - 1, today.day + 1):
-        # # for day_target in [24]:
+        # for day_target in [9, 19, 29]:
         #     marged_day = medal_rate_by_day(df, day_target)
         #     marged_day.to_csv(f"anaslo_02/out/{HALL_NAME}_marged_day.csv", index=True)
         #     if TO_SPREADSHEET:
@@ -106,12 +112,8 @@ for PREF, HALL_NAME, DAYS_AGO, PERIOD in HALL_LIST:
         df, model_list = df_preprocessing(df_db, HALL_NAME)
         merged_by_unit = history_by_unit(df)
         merged_by_unit.to_csv(f"anaslo_02/out/{HALL_NAME}_history_by_unit.csv", index=True)
-
-        spreadsheet = connect_to_spreadsheet(SPREADSHEET_IDS[HALL_NAME])
-        # dataFrame_to_gspread(model_rate, spreadsheet, sheet_name="MODEL_RATE")
-        # dataFrame_to_gspread(island_rate, spreadsheet, sheet_name="ISLAND_RATE")
-        # dataFrame_to_gspread(unit_rate, spreadsheet, sheet_name="UNIT_RATE")
         dataFrame_to_gspread(merged_by_unit, spreadsheet, sheet_name="HISTORY")
+                
     
 logger.info(f"🎉 {HALL_NAME} データ収集終了")
 logger.info("=" * 40)

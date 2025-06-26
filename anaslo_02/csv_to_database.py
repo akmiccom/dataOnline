@@ -13,7 +13,7 @@ logger = setup_logger("datebase_to_gspread", log_file=LOG_PATH)
 
 # ファイル名から都道府県・ホール名・日付を取得
 def get_pref_hallName_date(csv_file):
-    logger.info(f"File Name： {csv_file}")
+    logger.info(f"📄 File detected: {csv_file}")
     filename = os.path.basename(csv_file)
     match = re.match(r"(.+?)_(.+?)_(\d{4}-\d{2}-\d{2})\.csv", filename)
     if not match:
@@ -23,7 +23,7 @@ def get_pref_hallName_date(csv_file):
     hall_name = match.group(2)
     date = match.group(3)
 
-    logger.info(f"📄 ファイル名から抽出： {prefecture}, {hall_name}, {date}")
+    logger.info(f"🏷 Parsed info from filename: {prefecture}, {hall_name}, {date}")
     
     return prefecture, hall_name, date
 
@@ -75,7 +75,7 @@ def append_database(cursor, df, hall_id, hall_name, date):
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         """, (hall_id, model_id, unit_no, date, games, BB, RB, medals))
     
-    logger.info(f"✅ {hall_name}, {date}: results テーブルに登録しました。")
+    logger.info(f"✅ Added to database (table: results): {hall_name}, {date}")
 
 
 def csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH):
@@ -84,7 +84,7 @@ def csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH):
 
     csv_files = glob.glob(f'{CSV_PATH}*.csv')
     if not csv_files:
-        logger.info("CSVファイルが見つかりません")
+        logger.info("CSVファイルはすべて処理されています。")
         return
     for csv_file in csv_files:
         # CSVファイル名から都道府県・ホール名・日付を取得
@@ -104,7 +104,7 @@ def csv_to_database(DB_PATH, CSV_PATH, ARCHIVE_PATH):
         # アーカイブに移動
         archive_path = os.path.join(ARCHIVE_PATH, os.path.basename(csv_file))
         shutil.move(csv_file, archive_path)
-        logger.info(f"📦 CSVファイルをアーカイブへ移動しました → {archive_path}")
+        logger.info(f"📦 Archived file → {archive_path}")
         
         # time.sleep(0.2) # プログラミングっぽく
 

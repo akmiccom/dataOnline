@@ -1,0 +1,62 @@
+[2025-06-23 08:55:26] [INFO] ✅ undetected-chromedriver is up-to-date. (version: 3.5.5)
+[2025-06-23 08:55:30] [INFO] ✅ Successfully accessed: https://www.google.com/
+[2025-06-23 08:55:31] [INFO]
+[2025-06-23 08:55:31] [INFO] ========================================
+[2025-06-23 08:55:31] [INFO]        ANA-SLO Data Collection Started
+[2025-06-23 08:55:31] [INFO] ========================================
+[2025-06-23 08:55:34] [INFO] 🗓 Target Date: Sunday, June 22, 2025
+[2025-06-23 08:55:40] [INFO] ⚠ Google Ads detected. Retrying... (1/5)
+[2025-06-23 08:55:57] [INFO] ✅ Navigation successful: https://ana-slo.com/2025-06-22-exa-first-data/
+[2025-06-23 08:55:57] [INFO] 🗓 Date extracted from URL: 2025-06-22
+[2025-06-23 08:55:57] [INFO] 🏢 Hall extracted from URL: EXA_FIRST
+[2025-06-23 08:55:57] [INFO] ⏳ Please complete the manual verification within 10 seconds
+[2025-06-23 08:56:07] [INFO] 🗓 Date confirmed on page: 2025-06-22
+[2025-06-23 08:56:07] [INFO] 🏢 Hall confirmed on page: EXA FIRST
+[2025-06-23 08:56:08] [INFO] ⏬ Starting to fetch 407 rows...
+[2025-06-23 08:56:08] [INFO] 📥 Downloading data...
+[2025-06-23 08:57:04] [INFO] ✅ Row 405: Data fetch completed
+[2025-06-23 08:57:04] [INFO]
+[2025-06-23 08:57:04] [INFO] 💾 Data saved: anaslo_02/csv/東京都_EXA FIRST_2025-06-22.csv
+
+[2025-06-23 08:58:17] [INFO] 🗓 Target Date: Saturday, June 21, 2025
+[2025-06-23 08:58:30] [INFO] ✅ Navigation successful: https://ana-slo.com/2025-06-21-exa-first-data/
+[2025-06-23 08:58:30] [INFO] 🗓 Date extracted from URL: 2025-06-21
+[2025-06-23 08:58:30] [INFO] 🏢 Hall extracted from URL: EXA_FIRST
+[2025-06-23 08:58:30] [INFO] ⏳ Please complete the manual verification within 10 seconds
+[2025-06-23 08:58:40] [INFO] 🗓 Date confirmed on page: 2025-06-21
+[2025-06-23 08:58:40] [INFO] 🏢 Hall confirmed on page: EXA FIRST
+[2025-06-23 08:58:40] [INFO] ⏬ Starting to fetch 407 rows...
+[2025-06-23 08:58:40] [INFO] 📥 Downloading data...
+[2025-06-23 08:59:37] [INFO] ✅ Row 405: Data fetch completed
+[2025-06-23 08:59:37] [INFO]
+[2025-06-23 08:59:37] [INFO] 💾 Data saved: anaslo_02/csv/東京都_EXA FIRST_2025-06-21.csv
+
+[2025-06-23 09:00:47] [INFO] 📄 File detected: anaslo_02/csv\東京都_EXA FIRST_2025-06-21.csv
+[2025-06-23 09:00:47] [INFO] 🏷 Parsed info from filename: Tokyo, EXA FIRST, 2025-06-21
+[2025-06-23 09:00:47] [INFO] ✅ Added to database (table: results): EXA FIRST, 2025-06-21
+[2025-06-23 09:00:47] [INFO] 📦 Archived file → anaslo_02/archive/東京都_EXA FIRST_2025-06-21.csv
+
+[2025-06-23 09:00:47] [INFO] 📄 File detected: anaslo_02/csv\東京都_EXA FIRST_2025-06-22.csv
+[2025-06-23 09:00:47] [INFO] 🏷 Parsed info from filename: Tokyo, EXA FIRST, 2025-06-22
+[2025-06-23 09:00:48] [INFO] ✅ Added to database (table: results): EXA FIRST, 2025-06-22
+[2025-06-23 09:00:48] [INFO] 📦 Archived file → anaslo_02/archive/東京都_EXA FIRST_2025-06-22.csv
+
+[2025-06-23 09:00:48] [INFO] 🔍 Found hall name containing: 'EXA FIRST'
+[2025-06-23 09:00:48] [INFO] 📊 Data size: 22,952 rows × 11 columns
+[2025-06-23 09:00:48] [INFO] 📅 Search Range: 2024-12-31 ～ 2025-05-31 | Extraction Range: 2024-12-31 ～ 2025-05-31
+[2025-06-23 09:00:48] [INFO] 📆 Days included: 151
+[2025-06-23 09:00:48] [INFO] 🔧 Starting data preprocessing...
+
+[2025-06-23 09:01:09] [INFO] ✅ Connected to Google Spreadsheet: EXA FIRST
+[2025-06-23 09:01:14] [INFO] ✅ Sheet 'DAY22' found. Starting update...
+[2025-06-23 09:01:36] [INFO] 💾 Sheet 'DAY22' updated successfully
+
+[2025-06-23 09:01:36] [INFO] 🔍 Found hall name containing: 'EXA FIRST'
+[2025-06-23 09:01:36] [INFO] 📊 Data size: 8,968 rows × 11 columns
+[2025-06-23 09:01:36] [INFO] 📅 Search Range: 2025-04-25 ～ 2025-06-23 | Extraction Range: 2025-04-25 ～ 2025-06-22
+[2025-06-23 09:01:36] [INFO] 📆 Days included: 59
+[2025-06-23 09:01:36] [INFO] 🔧 Starting data preprocessing...
+
+[2025-06-23 09:01:47] [INFO] ✅ Connected to Google Spreadsheet: EXA FIRST
+[2025-06-23 09:01:50] [INFO] ✅ Sheet 'HISTORY' found. Starting update...
+[2025-06-23 09:02:07] [INFO] 💾 Sheet 'HISTORY' updated successfully

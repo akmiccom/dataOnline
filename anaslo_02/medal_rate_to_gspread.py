@@ -38,7 +38,7 @@ def create_df_from_database(hall_name, start_date, end_date, model_name=None):
     # 結果表示
     if results:
         hall_id, hall_name = results[0]
-        logger.info(f"🔍 '{hall_name}' を含むホール名が見つかりました。")
+        logger.info(f"🔍 Found hall name containing: {hall_name}")
     else:
         logger.info(f"❌ '{hall_name}' を含むホール名は見つかりませんでした。")
 
@@ -63,9 +63,9 @@ def create_df_from_database(hall_name, start_date, end_date, model_name=None):
     query += " ORDER BY r.date DESC, r.unit_no ASC"
 
     df = pd.read_sql_query(query, conn, params=params)
-    logger.info(f"データサイズ: {df.shape[0]} x {df.shape[1]}")
-    logger.info(f"📅 検索期間: {start_date} ～ {end_date}", f"📅 抽出期間: {df.date.min()} ～ {df.date.max()}")
-    logger.info(f'含まれる日数 : {df["date"].nunique()}')
+    logger.info(f"📊 Data size: {df.shape[0]} x {df.shape[1]}")
+    logger.info(f"📅 Search Range: {start_date} ～ {end_date} | Extraction Range: {df.date.min()} ～ {df.date.max()}")
+    logger.info(f'📆 Days included: {df["date"].nunique()}')
 
     return df
 

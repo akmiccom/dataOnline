@@ -46,7 +46,7 @@ def start_google_chrome(url, screen_width=2200, screen_height=1900, implicitly_w
 
     # 指定URLを開く
     driver.get(url)
-    logger.info(f"実行成功: {url}")
+    logger.info(f"✅ Successfully accessed: {url}")
     driver.implicitly_wait(implicitly_wait)  # 最大n秒待機
     time.sleep(1)
 

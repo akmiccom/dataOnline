@@ -35,7 +35,7 @@ def upgrade_uc_if_needed():
                 check=True,
             )
         else:
-            logger.info(f"undetected-chromedriver は最新版です。 ({current})")
+            logger.info(f"✅ undetected-chromedriver is up-to-date. ({current})")
     except Exception as e:
         logger.error(f"バージョン確認失敗: {e}")
 
@@ -52,7 +52,7 @@ def connect_to_spreadsheet(SPREADSHEET_ID):
         creds = ServiceAccountCredentials.from_json_keyfile_name(jsonf, scope)
         client = gspread.authorize(creds)
         spreadsheet = client.open_by_key(SPREADSHEET_ID)
-        logger.info(f"✅ スプレッドシートに接続しました: {spreadsheet.title}")
+        logger.info(f"✅ Connected to Google Spreadsheet: {spreadsheet.title}")
         return spreadsheet
 
     except gspread.exceptions.SpreadsheetNotFound:
@@ -68,10 +68,10 @@ def get_or_create_worksheet(spreadsheet, sheet_name, rows, cols):
     '''存在しないシートを自動で作成'''
     try:
         worksheet = spreadsheet.worksheet(sheet_name)
-        logger.info(f"✅ シート '{sheet_name}' が見つかりました。処理を開始します")
+        logger.info(f"✅ Sheet '{sheet_name}'  found. Starting update...")
     except gspread.exceptions.WorksheetNotFound:
         worksheet = spreadsheet.add_worksheet(sheet_name, rows, cols)
-        logger.info(f"🆕 シート '{sheet_name}' を新規作成しました")
+        logger.info(f"💾 Sheet '{sheet_name}' updated successfully")
     return worksheet
 
 
@@ -81,7 +81,7 @@ def get_existing_worksheet(spreadsheet, sheet_name):
     '''シートがなければログを出して中断'''
     try:
         worksheet = spreadsheet.worksheet(sheet_name)
-        logger.info(f"✅ シート '{sheet_name}' に接続しました")
+        logger.info(f"✅ Sheet '{sheet_name}'  found. Starting update...")
         return worksheet
     except gspread.exceptions.WorksheetNotFound:
         logger.error(f"❌ シート '{sheet_name}' が存在しません")
@@ -90,9 +90,9 @@ def get_existing_worksheet(spreadsheet, sheet_name):
 
 def log_banner(title: str):
     logger.info("")
-    logger.info("=" * 40)
-    logger.info("         ANA-SLO データ収集         ")
-    logger.info("=" * 40)
+    logger.info("=" * 50)
+    logger.info("         ANA-SLO Data Collection Started         ")
+    logger.info("=" * 50)
 
 
 

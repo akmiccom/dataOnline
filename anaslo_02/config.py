@@ -26,21 +26,23 @@ SPREADSHEET_IDS = {
     "グランドオータ新座駅前店": "1cPAH5IW_qlViRKCc0eR1m-NN8eBuJ_0sjrDDYT_DWas",
     "toho川越店": "1VOr7BNMB-xnHihZrk6MFmetlZ0nCFP86YcrJu9w0dac",
     "ニューダイエイiii": "1CBDcxHjGT11_ujn0v_m-xDIZKJ6Xw1RaFzGdOt3jFVo",
-    # "パールショップともえ川越店": "1i70joJ27Hs7inS-D89z9YMSJO1aRvaBeeWn0n9xpktY",
+    "レイト平塚": "1WlvgMk-u_tUWizQVOYDQVg7bECyVzLm0-wlJDgJteAw",
+    "パールショップともえ川越店": "1i70joJ27Hs7inS-D89z9YMSJO1aRvaBeeWn0n9xpktY",
+    "楽園大山店": "1dewRwbCe783UAj7C_r5tn4CA7JyPfwxCahc8aOf9M2I",
     # "パラッツォ川越店": "179nJF0NvLng7xPKsd_NX2pJBXsDNsO8SJhOvUAvFk2I",
-    }
+}
 
 
 MODEL_LIST = [
-        "マイジャグラーV",
-        "ゴーゴージャグラー3",
-        "アイムジャグラーEX-TP",
-        "ファンキージャグラー2",
-        "ミスタージャグラー",
-        "ウルトラミラクルジャグラー",
-        "ジャグラーガールズ",
-        "ハッピージャグラーVIII",
-    ]
+    "マイジャグラーV",
+    "ゴーゴージャグラー3",
+    "アイムジャグラーEX-TP",
+    "ファンキージャグラー2",
+    "ミスタージャグラー",
+    "ウルトラミラクルジャグラー",
+    "ジャグラーガールズ",
+    "ハッピージャグラーVIII",
+]
 
 
 QUERY = """

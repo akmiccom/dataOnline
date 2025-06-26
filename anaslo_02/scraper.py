@@ -38,7 +38,7 @@ def click_date_link(driver, DAYS_AGO, MAX_RETRIES=3):
             return False
 
         target_link = date_links[DAYS_AGO - 1]
-        logger.info(f"取得対象日付: {target_link.text}")
+        logger.info(f"🗓 Target Date: {target_link.text}")
 
         while retries < MAX_RETRIES:
             driver.execute_script(
@@ -56,14 +56,12 @@ def click_date_link(driver, DAYS_AGO, MAX_RETRIES=3):
 
             if "google_vignette" in driver.current_url:
                 retries += 1
-                logger.info(
-                    f"⚠ Google広告が表示されました。リトライします ({retries}/{MAX_RETRIES})"
-                )
+                logger.info(f"⚠ Google Ads detected. Retrying... ({retries}/{MAX_RETRIES})")
                 driver.back()  # 広告ページから戻る
                 time.sleep(2)
                 continue  # リトライ
 
-            logger.info(f"遷移成功: {driver.current_url}")
+            logger.info(f"✅ Navigation successful: {driver.current_url}")
             date, hall_name = extract_date_hall(driver.current_url)
             return date, hall_name
 
@@ -89,8 +87,8 @@ def extract_date_hall(url):
         hall_name = hall_name.replace(
             "-", "_"
         ).upper()  # "-" をスペースに置き換えて大文字に
-        logger.info(f"URLより取得した日付: {date}")
-        logger.info(f"URLより取得したホール名: {hall_name}")
+        logger.info(f"🗓 Date extracted from URL: {date}")
+        logger.info(f"🏢 Hall extracted from URL: {hall_name}")
         return date, hall_name
     else:
         return None, None  # マッチしない場合
@@ -112,8 +110,8 @@ def click_machine_by_name(driver):
         hall_match = re.search(hall_pattern, title)
         hall_name = hall_match.group(1) if hall_match else None
 
-        logger.info(f"遷移したページの日付: {date}")
-        logger.info(f"遷移したページのホール名: {hall_name}")
+        logger.info(f"🗓 Date confirmed on page: {date}")
+        logger.info(f"🏢 Hall confirmed on page: {hall_name}")
 
         return date, hall_name
 
@@ -146,8 +144,8 @@ def extract_and_save_model_data(driver, prefecture, hall_name, date, csv_path):
             logger.error(f"⚠️ データが見つかりません")
             # return False
 
-        logger.info(f"{len(rows)} 行の取得を開始します")
-        logger.info("取得中...")
+        logger.info(f"⏬ Starting to fetch {len(rows)} rows...")
+        logger.info("📥 Downloading data...")
 
         # ヘッダー取得
         header_cells = rows[0].find_elements(By.TAG_NAME, "th")
@@ -158,7 +156,7 @@ def extract_and_save_model_data(driver, prefecture, hall_name, date, csv_path):
         for row in rows[2:]:  # 最終行を除外
             cells = row.find_elements(By.TAG_NAME, "td")
             data.append([cell.text for cell in cells])
-        logger.info(f"{len(data)}: データ取得完了しました")
+        logger.info(f"✅ Row {len(data)}: Data fetch completed")
 
         # DataFrameを作成しCSVに保存
         df = pd.DataFrame(data, columns=columns)
@@ -183,7 +181,7 @@ def extract_and_save_model_data(driver, prefecture, hall_name, date, csv_path):
 
         logger.info(rows[1].text)
 
-        logger.info(f"データ保存完了: {csv_name}")
+        logger.info(f"💾 Data saved: {csv_name}")
         return True
 
     except Exception as e:
@@ -203,7 +201,7 @@ def scraper_for_data(driver, days_ago, REMOVE_ADS_SCRIPT, CSV_PATH, PREF, URL, M
     driver.execute_script("document.body.style.zoom='80%'")
     
     waiting_time = 10
-    logger.info(f"{waiting_time}秒以内に手動で認証してください")
+    logger.info(f"⏳ Please complete the manual verification within {waiting_time} seconds")
     time.sleep(waiting_time)
 
     date, hall_name = click_machine_by_name(driver)
