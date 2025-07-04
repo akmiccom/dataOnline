@@ -1,3 +1,11 @@
 [
-  {"area": "ohter", "start": 100000, "end": 1000001}
+  {"area": "a: GJ3", "start": 2682, "end": 2701},
+  {"area": "b: MJV", "start": 2630, "end": 2638},
+  {"area": "c: MJV", "start": 2650, "end": 2668},
+  {"area": "d: MJV", "start": 3001, "end": 3003},
+  {"area": "e: I'm", "start": 2805, "end": 2812},
+  {"area": "f: FJ2", "start": 2670, "end": 2681},
+  {"area": "g: HJV3", "start": 2626, "end": 2628},
+  {"area": "h: UMJ", "start": 2702, "end": 2705},
+  {"area": "i: MRJ", "start": 2800, "end": 2803}
 ]

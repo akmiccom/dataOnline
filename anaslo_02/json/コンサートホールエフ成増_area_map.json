@@ -1,7 +1,8 @@
 [
   {"area": "a: MYV", "start": 600, "end": 608},
   {"area": "b: MYV", "start": 657, "end": 685},
-  {"area": "c: GO3", "start": 689, "end": 715},
+  {"area": "c: GO3", "start": 689, "end": 701},
+  {"area": "c-1: GO3", "start": 709, "end": 715},
   {"area": "d: IMJ", "start": 613, "end": 633},
   {"area": "e: FJ2", "start": 649, "end": 656},
   {"area": "f: MRJ", "start": 702, "end": 708},
