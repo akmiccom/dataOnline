@@ -366,10 +366,7 @@ def medal_rate_by_day(df, day_target):
 if __name__ == "__main__":
 
     HALL_NAME = "EXA FIRST"
-    # HALL_NAME = "第一プラザ坂戸1000"
-    # HALL_NAME = "第一プラザ狭山店"
-    # HALL_NAME = "第一プラザみずほ台店"
-    # HALL_NAME = "みずほ台uno"
+    HALL_NAME = "楽園大山店"
     
     model_name = "ジャグラー"
     

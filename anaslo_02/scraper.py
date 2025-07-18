@@ -218,9 +218,6 @@ if __name__ == "__main__":
     PREF = "東京都"
     HALL_NAME = "exa-first"
     
-    PREF = "埼玉県"
-    HALL_NAME = "第一プラザ狭山店"
-    
     URL = f"https://ana-slo.com/ホールデータ/{PREF}/{HALL_NAME}-データ一覧/"
 
     DAYS_AGO = 1

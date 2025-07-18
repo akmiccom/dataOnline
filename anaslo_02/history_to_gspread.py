@@ -21,7 +21,7 @@ logger = setup_logger("datebase_to_gspread", log_file=LOG_PATH)
 def history_by_unit(df):
     merged_by_unit = pd.DataFrame()
     
-    pivot_targets = ["medals", "game", "RB_rate", "Total_rate", "Grape_rate", "5more"]
+    pivot_targets = ["medals", "game", "BB", "RB", "RB_rate", "Total_rate", "Grape_rate", "5more"]
     index_targets = ["area", "model_name", "unit_no"]
     columns_targets = ["date"]
 
@@ -41,6 +41,8 @@ def history_by_unit(df):
         
         medals = pivot_results["medals"]
         game = pivot_results["game"]
+        bb = pivot_results["BB"]
+        rb = pivot_results["RB"]
         rb_rate = pivot_results["RB_rate"]
         total_rate = pivot_results["Total_rate"]
         grape_rate = pivot_results["Grape_rate"]
@@ -59,6 +61,8 @@ def history_by_unit(df):
         medal_rank3 = medal_rank3.fillna(0).replace([np.inf, -np.inf], 0).astype(int)
         medal_rank1 = medals.rank(method="min", ascending=True)
         medal_rank1 = medal_rank1.fillna(0).replace([np.inf, -np.inf], 0).astype(int)
+        game_rank = game.rank(method="min", ascending=True)
+        game_rank = game_rank.fillna(0).replace([np.inf, -np.inf], 0).astype(int)
 
         # MultiIndex化（ラベル付け）
         labeled_tables = [
@@ -68,6 +72,8 @@ def history_by_unit(df):
             ("RB_RATE", rb_rate),
             ("GAME", game),
             ("RATE_MEDAL", medal_rate),
+            ("RB", rb),
+            ("BB", bb),
             ("MEDALS", medals),
             ("3ROLLING", rolling3),
             # ("5ROLLING", rolling5),
@@ -76,6 +82,7 @@ def history_by_unit(df):
             ("3RANK", medal_rank3),
             # ("5RANK", medal_rank5),
             ("7RANK", medal_rank7),
+            ("GAME_RANK", game_rank),
         ]
         for label, df_table in labeled_tables:
             df_table.columns = pd.MultiIndex.from_product([[label], df_table.columns])
@@ -134,17 +141,12 @@ def history_by_unit(df):
 if __name__ == "__main__":
     
     HALL_LIST = [
-        ("東京都", "EXA FIRST", 1, 1),
-        # ("東京都", "コンサートホールエフ成増", 1, 1),
-        # ("埼玉県", "第一プラザ坂戸1000", 1, 1),
-        # ("埼玉県", "第一プラザ狭山店", 1, 1),
-        # ("埼玉県", "みずほ台uno", 1, 1),
-        # ("埼玉県", "第一プラザみずほ台店", 1, 1),
+        ("東京都", "スロットエランドール田無店", 1, 1),
     ]
     
     model_name = "ジャグラー"
     
-    add_spreadsheet = False
+    add_spreadsheet = True
     
     query = """
         -- 出玉データにホール名と機種名を結合して取得
@@ -170,7 +172,7 @@ if __name__ == "__main__":
             AREA_MAP_PATH = f"C:/python/dataOnline/anaslo_02/json/other_area_map.json"
 
         today = datetime.date.today()
-        start_date = datetime.date(today.year, today.month-1, 1) - relativedelta(days=6)
+        start_date = today - relativedelta(days=36)
         df_db = create_df_from_database(HALL_NAME, start_date, today, model_name=model_name)
         df, model_list = df_preprocessing(df_db, HALL_NAME)
         
@@ -180,5 +182,5 @@ if __name__ == "__main__":
         
         if add_spreadsheet:
             spreadsheet = connect_to_spreadsheet(SPREADSHEET_ID)
-            dataFrame_to_gspread(merged_by_unit, spreadsheet, sheet_name="HISTORY")
+            dataFrame_to_gspread(merged_by_unit, spreadsheet, sheet_name="HIST_TEST")
         
