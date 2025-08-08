@@ -21,46 +21,7 @@ from logger_setup import setup_logger
 
 logger = setup_logger("main", log_file=LOG_PATH)
 
-
-# ============================
-# 全ホール定義：都道府県 + ホール名 + 日数範囲
-# ============================
-
-HALL_LIST = [
-    ("東京都", "EXA FIRST", 1, 2),
-    ("東京都", "コンサートホールエフ成増", 1, 2),
-    ("東京都", "スロットエランドール田無店", 1, 2),
-    ("東京都", "楽園大山店", 1, 2),
-    ("東京都", "マルハン大山店", 1, 2),
-    ("埼玉県", "パールショップともえ川越店", 1, 2),
-    
-    # ("埼玉県", "ミリオン和光10号店", 1, 2),
-    # ("埼玉県", "ニューダイエイiii", 1, 2),
-    # ("埼玉県", "グランドオータ新座駅前店", 1, 2),
-    # ("埼玉県", "ニュークラウン川越2号店", 1, 2),
-    
-    # ("茨城県", "レイト平塚", 1, 2),
-    
-    
-    # ("埼玉県", "第一プラザみずほ台店", 1, 2),
-    # ("埼玉県", "sapみずほ台", 1, 2),
-    # ("埼玉県", "みずほ台uno", 1, 2),
-    # ("埼玉県", "オータ志木駅前店", 1, 2),
-    # ("埼玉県", "toho川越店", 1, 2),
-    
-    # ("埼玉県", "第一プラザ坂戸1000", 1, 2),
-    # ("埼玉県", "第一プラザ狭山店", 1, 2),
-    # ("埼玉県", "第一プラザ坂戸にっさい店", 1, 2),
-    
-    # ("茨城県", "レイト平塚", 105, 10),
-    # ("東京都", "マルハン大山店", 100, 10),
-]
-
-model_name = "ジャグラー"
-
 SCRAPER = True
-# SCRAPER = False
-
 TO_SPREADSHEET = True
 HISTORY = True
 MODEL_RATE  = True
@@ -68,19 +29,66 @@ ISLAND_RATE = True
 UNIT_RATE = True
 DAY_RATE = True
 
-TO_SPREADSHEET = False
-MODEL_RATE  = False
-ISLAND_RATE = False
-UNIT_RATE = False
+
+# ============================
+# 全ホール定義：都道府県 + ホール名 + 日数範囲
+# ============================
+
+
+model_name = "ジャグラー"
+
+HALL_LIST = [
+    ("東京都", "EXA FIRST", 1, 1),
+    ("東京都", "コンサートホールエフ成増", 1, 1),
+    ("東京都", "楽園大山店", 1, 1),
+    ("東京都", "マルハン大山店", 1, 1),
+    ("東京都", "大山オーシャン", 1, 1),
+    # ("東京都", "大山オーシャン", 51, 10),
+    # ("東京都", "クラウンときわ台", 50, 10),
+    # ("東京都", "ミリオン東武練馬13号店", 1, 10),
+    # ("東京都", "ミリオン平和台16号店", 1, 10),
+    
+    ("茨城県", "レイト平塚", 1, 1),
+    
+    ("東京都", "スロットエランドール田無店", 1, 1),
+    
+    ("埼玉県", "パールショップともえ川越店", 1, 1),
+    ("埼玉県", "ニューダイエイiii", 1, 1),
+    ("埼玉県", "グランドオータ新座駅前店", 1, 1),
+    ("埼玉県", "ニュークラウン川越2号店", 1, 1),
+    
+    # ("埼玉県", "第一プラザみずほ台店", 1, 1),
+    # ("埼玉県", "みずほ台uno", 1, 1),
+    # ("埼玉県", "sapみずほ台", 1, 1),
+    # ("埼玉県", "ミリオン和光10号店", 1, 1),
+    # ("埼玉県", "オータ志木駅前店", 1, 1),
+    
+    # ("埼玉県", "第一プラザ坂戸1000", 1, 1),
+    # ("埼玉県", "第一プラザ狭山店", 1, 1),
+    # ("埼玉県", "第一プラザ坂戸にっさい店", 1, 1),
+    # ("埼玉県", "toho川越店", 1, 1),
+    
+    # ("東京都", "マルハン大山店", 125, 15),
+    # ("茨城県", "レイト平塚", 130, 10),
+]
+# ============================
+
+
+# SCRAPER = False
+# TO_SPREADSHEET = False
+
+# MODEL_RATE  = False
+# ISLAND_RATE = False
+# UNIT_RATE = False
 # DAY_RATE = False
-LAST_DIGIT_DAY = 10
+LAST_DIGIT_DAY = 9
 
 # ============================
 
 if SCRAPER:
     upgrade_uc_if_needed()
     driver = scraper.start_google_chrome("https://www.google.com/")
-    time.sleep(5)
+    time.sleep(3)
 
 for PREF, HALL_NAME, DAYS_AGO, PERIOD in HALL_LIST:
     log_banner(f"📊 {HALL_NAME} データ収集開始")
@@ -92,7 +100,7 @@ for PREF, HALL_NAME, DAYS_AGO, PERIOD in HALL_LIST:
             scraper.scraper_for_data(
                 driver, days_ago, scraper.REMOVE_ADS_SCRIPT, CSV_PATH, PREF, URL
             )
-            time.sleep(randint(10, 15))
+            time.sleep(randint(2, 3))
 
     if TO_SPREADSHEET:
         # スプレッドシートに接続
@@ -140,9 +148,9 @@ for PREF, HALL_NAME, DAYS_AGO, PERIOD in HALL_LIST:
                     
         # HISTORY 用のピボット処理・出力
         if HISTORY:
-            start_date = today - relativedelta(months=0, days=36)
+            start_date = today - relativedelta(months=0, days=38)
             if HALL_NAME == "パールショップともえ川越店":
-                start_date = today - relativedelta(months=3, days=36)
+                start_date = today - relativedelta(months=3, days=38)
             df_db = create_df_from_database(HALL_NAME, start_date, today, model_name=model_name)
             df, model_list = df_preprocessing(df_db, HALL_NAME)
             merged_by_unit = history_by_unit(df)

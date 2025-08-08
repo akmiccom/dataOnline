@@ -94,4 +94,6 @@ SPREADSHEET_IDS = {
     "sapみずほ台": "1zTVmFbPS7HRmXe8VlJczPXl407BCp8fMZPZJdz1e23Y",
     "マルハン大山店": "14EO39e7xjHu-H7kBOTz3ZI3M0RN6hkbFIN8XD-ZKmPE",
     "ミリオン和光10号店": "1UnWFvjjPS3kcxzFU5Pz0DdqCGK0ACVd1UwUc8FYlK8A",
+    "クラウンときわ台": "1ePS8wT2FaQwB9tpOm9Qgh1fY_fXM6_7usHFrMrm6XCQ",
+    "大山オーシャン": "1sJMqNDHE2eGzrRnaCSGUM60ky-DqE-rGK7L_e3R-N0w",
 }
